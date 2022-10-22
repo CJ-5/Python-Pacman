@@ -1,0 +1,25 @@
+{
+  "maps" : {
+    "main": {
+      "map_desc": null,
+      "name": "Test Map",
+      "map_ghost_qty": 3,
+      "innate_diff": 1,
+      "x_off": 1,
+      "y_off": 1,
+      "additional_blocking": [],
+      "map_data": [
+          "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+          "X                                          X",
+          "X XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X",
+          "X XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X",
+          "X XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X",
+          "X XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X",
+          "X XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X",
+          "X XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X",
+          "X0                                         X",
+          "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        ]
+    }
+  }
+}
