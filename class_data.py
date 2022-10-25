@@ -1,9 +1,17 @@
 from dataclasses import dataclass
+import json
+
+# DEBUG FUNCTION
+class Object:
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__,
+            sort_keys=True, indent=4)
 
 
 class debug:
     ignore_file_check = True
     coord_printout = True
+    map_backend_view = False
 
 
 @dataclass()
@@ -16,13 +24,32 @@ class Coord:
     x: int
     y: int
 
+@dataclass()
+class map_obj:
+    name: str = None  # The map name
+    in_diff: int = 1  # The innate difficulty
+    data: list = None  # The actual map data
+
+
+class map:  # Core Map Data
+    map_data: map_obj = None  # Core map data object, holds live copy of all map data (Override by map loader)
+    map_size: int = 0  # Map size x by y (Override by map loader)
+    map_name: str = None  # Map name (Override by map loader)
+    map_x_off: int = 0  # Map x offset (Override by map loader)
+    map_y_off: int = 0  # Map y offset (Override by map loader)
+    initial_y_off = 2 if debug.coord_printout else 1  # Initial y offset
+    char_spacing = 2  # Map character spacing
+    movement_active = True  # If movement should be active
+    blocking_char = ['X']  # List of characters that are not passable e.g a wall (Override by map loader)
+    default_tile = "·"  # Point default tile (Override by map loader)
+
 
 @dataclass()
 class movement:
-    tile_char: str
-    old_pos: Coord
-    new_pos: Coord
-    old_char: str = " "
+    tile_char: str  # The value of the tile / tile character
+    old_pos: Coord  # Position the tile is currently / old position
+    new_pos: Coord  # Where tile is being moved / new position
+    old_char: str = map.default_tile
 
 
 @dataclass()
@@ -34,13 +61,6 @@ class Item:
     type: int = 0  # Item type [Boost, Life, Ghost Orb]
 
 
-@dataclass()
-class map_obj:
-    name: str = None  # The map name
-    in_diff: int = 1  # The innate difficulty
-    data: list = None  # The actual map data
-
-
 class player_data:
     spawned = False
     lives = 3  # Current life count
@@ -48,19 +68,7 @@ class player_data:
     inv = []  # Various items that have been picked up
 
 
-class map:
-    map_data: map_obj = None
-    map_size: int = 0
-    map_name: str = None
-    map_x_off: int = 0
-    map_y_off: int = 0
-    initial_y_off = 2 if debug.coord_printout else 1
-    char_spacing = 2
-    movement_active = True
-    blocking_char = ['X']
-
-
-class SysData:
+class SysData:  # System Data
     kb_listen = None
     i_move_q = True
     move_q = [movement("K", Coord(3, 1), Coord(3, 5))]  # Movement package queue

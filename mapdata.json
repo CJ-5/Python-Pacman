@@ -8,6 +8,7 @@
       "x_off": 1,
       "y_off": 1,
       "additional_blocking": [],
+      "default_tile": "·",
       "map_data": [
           "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
           "X                                          X",

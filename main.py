@@ -6,9 +6,14 @@ import lib
 from colorama import init
 from pynput import keyboard
 from threading import Thread
+import threading
+import json
+import asyncio
+import time
+
+init()  # Colorama Init
 
 
-init() # Colorama Init
 
 gprint(MQ([ck("Welcome to "), ck("pacman", "yellow"), ck("!")]))
 gprint(MQ([ck("Initializing...")]))
@@ -20,7 +25,13 @@ gprint(MQ([ck("Initializing...")]))
 lib.map_loader("main")
 lib.show_map()
 
-# class_data.SysData.kb_listen = keyboard.Listener(on_press=lib.press_process)
-Thread(target=lib.moveq_master()).start()
+Thread(target=lib.moveq_master).start()
+
+
+# Debug Code Below
+print(lib.check(Coord(1, 1)))
+print(lib.jsondump(class_data.movement("t", Coord(0, 0), Coord(0, 0))))
+
+
 with keyboard.Listener(on_press=lib.press_process) as listener:
     listener.join()

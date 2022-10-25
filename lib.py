@@ -58,6 +58,7 @@ def map_loader(map_id: str = None):
     class_data.map.map_x_off = _m["x_off"]
     class_data.map.map_y_off = _m["y_off"]
     class_data.map.blocking_char += _m["additional_blocking"]
+    class_data.map.default_tile = _m["default_tile"]
     map_data_file.close()
 
     # Map Size Calc
@@ -67,23 +68,30 @@ def map_loader(map_id: str = None):
     class_data.map.map_size = x_max * len(class_data.map.map_data.data)
 
 
+def jsondump(obj):
+    return json.dumps(obj, default=lambda o: o.__dict__,
+        sort_keys=True, indent=4)
+
+
 def moveq_master():  # Movement Queue Master
     # print("Movement Queue Master Running...")
-    init()
     # print(Fore.RESET, end='\r')
     x_off = class_data.map.map_x_off
     y_off = class_data.map.map_y_off + class_data.map.initial_y_off
     _so = class_data.map.char_spacing
-
     while class_data.SysData.i_move_q:
         for pkg in class_data.SysData.move_q:
             # Update Position on backend
 
-            #show_map()
+            if class_data.debug.map_backend_view:  # Debug
+                show_map()
+
             class_data.map.map_data.data[::-1][pkg.old_pos.y + y_off - 2][pkg.old_pos.x + x_off] = pkg.old_char
             class_data.map.map_data.data[::-1][pkg.new_pos.y + y_off - 2][pkg.new_pos.x + x_off] = pkg.tile_char
-            #print(class_data.map.map_data.data[::-1][pkg.old_pos.y + y_off][pkg.old_pos.x + x_off])
-            #show_map()
+
+            if class_data.debug.map_backend_view:  # Debug
+                show_map()
+                continue
 
             # print("Processing Package")
             # Remove Old Character
@@ -103,8 +111,11 @@ def moveq_master():  # Movement Queue Master
         class_data.SysData.move_q.clear()
 
 
-def check(coord: class_data.Coord):
-    return
+
+def check(coord: class_data.Coord):  # Returns if move is valid or not
+    x_off = class_data.map.map_x_off
+    y_off = class_data.map.map_y_off + class_data.map.initial_y_off
+    return not class_data.map.map_data.data[::-1][coord.y + y_off][coord.x + x_off] in class_data.map.blocking_char
 
 
 
