@@ -41,7 +41,9 @@ class map:  # Core Map Data
     char_spacing = 2  # Map character spacing
     movement_active = True  # If movement should be active
     blocking_char = ['X']  # List of characters that are not passable e.g a wall (Override by map loader)
-    default_tile = "·"  # Point default tile (Override by map loader)
+    # default_tile = "·"  # Point default tile (Override by map loader)
+    default_tile = " "  # Point default tile (Override by map loader)
+    collected_coordinates = []
 
 
 @dataclass()
@@ -62,8 +64,11 @@ class Item:
 
 
 class player_data:
+    starting_tile = "○"
     spawned = False
+    active_direction = "up"
     lives = 3  # Current life count
+    points = 0
     pos = Coord(0, 0)  # Current pacman coordinate
     inv = []  # Various items that have been picked up
 
@@ -71,5 +76,5 @@ class player_data:
 class SysData:  # System Data
     kb_listen = None
     i_move_q = True
-    move_q = [movement("K", Coord(3, 1), Coord(3, 5))]  # Movement package queue
+    move_q = []  # Movement package queue
 
