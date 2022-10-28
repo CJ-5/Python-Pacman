@@ -1,12 +1,15 @@
 from colorama import Fore, Back, Style, init
 import time
 import class_data
-from class_data import MQ, Coord
+from class_data import MQ, Coord, movement, char_trans
 import json
 import os
 import sys
 from pynput.keyboard import Key, Controller
 import curses
+from pathfinding.core.diagonal_movement import DiagonalMovement
+from pathfinding.core.grid import Grid
+from pathfinding.finder.a_star import AStarFinder
 
 kb = Controller()
 
@@ -54,20 +57,54 @@ def map_loader(map_id: str = None):
 
     #class_data.map.map_data = map_data["maps"][map_id]["map_data"]
     _m = map_data["maps"][map_id]
+    gen_map = [[*x] for x in _m["map_data"]]
 
     # Map Data Conversion
-    class_data.map.map_data = class_data.map_obj(_m["name"], _m["innate_diff"], [[*x] for x in _m["map_data"]])
+    class_data.map.map_data = class_data.map_obj(_m["name"], _m["innate_diff"], gen_map)
     class_data.map.map_x_off = _m["x_off"]
     class_data.map.map_y_off = _m["y_off"]
+    class_data.player_data.starting_pos = Coord(_m["starting_pos"][0], _m["starting_pos"][1])
     class_data.map.blocking_char += _m["additional_blocking"]
     class_data.map.default_tile = _m["default_tile"]
+    class_data.map.collision_tiles += _m["collision_tiles"]
     map_data_file.close()
 
     # Map Size Calc
     x_max = 0
     for row in class_data.map.map_data.data:
         x_max = len(row) if len(row) > x_max else x_max
+
     class_data.map.map_size = x_max * len(class_data.map.map_data.data)
+    class_data.map.collected_coordinates.append(class_data.player_data.starting_pos)
+
+    # Generate Pathfinding Map
+    """
+    Takes the entire map and checks character by character
+    if the current tile is a blocking character if it is
+    add a 0 to the pathfinding map row to represent a spot that
+    cannot be moved on, if not a blocking character add a 1 to
+    represent a spot that is (True) valid to use for pathfinding
+    """
+    class_data.SysData.path_find_map = []
+    ghost_pos = []
+    for _y, row in enumerate(gen_map[::-1]):
+        _l = []  # Create local list to generate single row
+        for _x, tile in enumerate(row):
+            _l.append(int(tile not in class_data.map.blocking_char))
+            if tile == "1":
+                ghost_pos.append(Coord(_x - 1, _y - 1))
+        class_data.SysData.path_find_map.append(_l)  # Add created row to path_find_map
+    # print(class_data.SysData.path_find_map)
+
+    # Ghost Generation
+    _aiv = class_data.ai_data
+    # _aiv.heatseak_pos, _aiv.random_pos, _aiv.ghost2_pos, _aiv.ghost3_pos = [x for x in ghost_pos]
+    class_data.ai_data.heatseak_pos = ghost_pos[0]
+    # _aiv = class_data.ai_data
+    # class_data.SysData.move_q.append(class_data.movement("G", class_data.ai_data.heatseak_pos, class_data.ai_data.heatseak_pos))
+    # class_data.SysData.move_q.append(class_data.movement("g", _aiv.random_pos, _aiv.random_pos))
+    # class_data.SysData.move_q.append(class_data.movement("H", _aiv.ghost2_pos, _aiv.ghost2_pos))
+    # print(class_data.ai_data.heatseak_pos)
 
 
 def jsondump(obj):
@@ -81,18 +118,24 @@ def moveq_master():  # Movement Queue Master
     x_off = class_data.map.map_x_off
     y_off = class_data.map.map_y_off + class_data.map.initial_y_off
     _so = class_data.map.char_spacing
-    p_y_off = 2 if class_data.debug.coord_printout else 1  # Includes both coord printout and Point printout
+    #p_y_off = 2 if class_data.debug.coord_printout else 1  # Includes both coord printout and Point printout
+    p_y_off = 2   # Includes both coord printout and Point printout
 
     while class_data.SysData.i_move_q:
-        while not len(class_data.SysData.move_q):
+        while not len(class_data.SysData.move_q):  # Loop Lock
             continue
+
         pkg_list = class_data.SysData.move_q
         for pkg in pkg_list:
-            # Update Position on backend
+            # Check for collisions
 
+
+            # Update Position on backend
             if class_data.debug.map_backend_view:  # Debug
                 show_map()
 
+            # class_data.map.map_data.data[::-1][_pos_y][_pos_x] = pkg.old_char
+            # class_data.map.map_data.data[::-1][pos_y][pos_x] = pkg.tile_char
             class_data.map.map_data.data[::-1][pkg.old_pos.y + y_off - 2][pkg.old_pos.x + x_off] = pkg.old_char
             class_data.map.map_data.data[::-1][pkg.new_pos.y + y_off - 2][pkg.new_pos.x + x_off] = pkg.tile_char
 
@@ -122,15 +165,92 @@ def moveq_master():  # Movement Queue Master
                 #print("{:<15}".format(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y}", end='\r'))
                 print(" " * 25, end='\r')
                 print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y}", end='\r')
-            #print(f"\x1b[{p_y_off - 1}B\r", end='')
+            else:
+                print("\r", end='')
+
         for pk in pkg_list:
             class_data.SysData.move_q.remove(pk)
+
+
+def debug_map():
+    for row in class_data.SysData.path_find_map[::-1]:
+        for tile in row:
+            print(tile, end='')
+        print("\n", end='')
+    grid = Grid(matrix=class_data.SysData.path_find_map)
+    start = grid.node(1,1)
+    end = grid.node(42,1)
+    finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
+    path, runs = finder.find_path(start, end, grid)
+    print(grid.grid_str(path=path, start=start, end=end))
+    grid.cleanup()
+
+
+def find_path(s_pos: Coord, e_pos: Coord):
+    grid = Grid(matrix=class_data.SysData.path_find_map)
+
+    x_off = 1
+    y_off = 1  # Map Y Offset
+
+    start = grid.node(s_pos.x + x_off, s_pos.y + y_off)
+    end = grid.node(e_pos.x + x_off, e_pos.y + y_off)
+    finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
+    path, _ = finder.find_path(start, end, grid)
+    # Debug Code
+    # print('operations:', runs, 'path length:', len(path))
+    # print(grid.grid_str(path=path, start=start, end=end))
+    # print(path)
+    return path
+
+
+def heat_seek_ai():  # Version 1.0 Heat-seeker ai
+    x_off = class_data.map.map_x_off  # Map X Offset
+    y_off = class_data.map.map_y_off  # Map Y Offset
+    #while class_data.map.movement_active:
+    _path = find_path(class_data.ai_data.heatseek_pos, Coord(13, 5))  # Do some black magic
+
+    path = [(x[0] - x_off, x[1] - y_off) for x in _path]
+
+    # Queue movements to go towards player
+    for c in path:
+        class_data.SysData.move_q.append(movement("1", class_data.ai_data.heatseek_pos, Coord(c[0], c[1]), ghost_id=1))
+        class_data.ai_data.heatseek_pos = Coord(c[0], c[1])
+        time.sleep(0.1)
+
+    time.sleep(0.5)
+    remove_gpkg(1)  # Remove all old packages for ghost type
+
+
+def translate_char(char: str):  # Translate a backend value into a display character for tile in row:
+    d = {
+        "X": char_trans("■", Fore.RED),
+        "0": char_trans(class_data.player_data.starting_tile, Fore.LIGHTGREEN_EX),
+        "1": char_trans("1", Fore.LIGHTBLUE_EX),
+        " ": char_trans("·"),
+        "@": char_trans(" ")
+    }
+
+    return d[char] if char in d.keys() else char_trans(char)
+
+
+def get_char(coord: Coord):  # Get the backend value at the specified position
+    return class_data.map.map_data[::-1][coord.y][coord.x]
+
+
+def remove_gpkg(ghost_id: int):
+    class_data.SysData.move_q = list(filter(lambda pkg: pkg.ghost_id != ghost_id, class_data.SysData.move_q))
 
 
 def check(coord: class_data.Coord):  # Returns if move is valid or not
     x_off = class_data.map.map_x_off
     y_off = class_data.map.map_y_off
-    return not class_data.map.map_data.data[::-1][coord.y + y_off][coord.x + x_off] in class_data.map.blocking_char
+    return class_data.map.map_data.data[::-1][coord.y + y_off][coord.x + x_off] not in class_data.map.blocking_char
+
+
+def check_collision(coord: class_data.Coord):
+    x_off = class_data.map.map_x_off
+    y_off = class_data.map.map_y_off
+    return class_data.map.map_data.data[::-1][coord.y + y_off][coord.x + x_off] not in class_data.map.collision_tiles
 
 
 def pacmand():  # This makes pacman move
@@ -145,7 +265,7 @@ def pacmand():  # This makes pacman move
     y_off = class_data.map.map_y_off
     while class_data.map.movement_active:
         _active = class_data.player_data.active_direction
-        x_diff = -1 if _active == "right" else 1 if _active == "left" else 0
+        x_diff = 1 if _active == "right" else -1 if _active == "left" else 0
         y_diff = 1 if _active == "up" else -1 if _active == "down" else 0
         _p = class_data.player_data.pos
         new_coord = Coord(_p.x + x_diff, _p.y + y_diff)
@@ -181,6 +301,8 @@ def show_map(map_in: class_data.map_obj = None):
                 map_out += f"{'·':<{local_spacing}}"
             elif tile == "0":
                 map_out += f"{class_data.player_data.starting_tile:<{local_spacing}}"
+            elif tile == "@":
+                map_out += f"{' ':<{local_spacing}}"
             else:
                 map_out += f"{tile:<{local_spacing}}"
         map_out += "\n"
@@ -201,11 +323,11 @@ def press_process(key):
         if key.char == "w":
             class_data.player_data.active_direction = "up"
         elif key.char == "a":
-            class_data.player_data.active_direction = "right"
+            class_data.player_data.active_direction = "left"
         elif key.char == "s":
             class_data.player_data.active_direction = "down"
         elif key.char == "d":
-            class_data.player_data.active_direction = "left"
+            class_data.player_data.active_direction = "right"
 
     except Exception:
         #print("Failed")
