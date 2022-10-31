@@ -20,11 +20,6 @@ cursor.hide()
 
 gprint(MQ([ck("Welcome to "), ck("pacman", "yellow"), ck("!")]))
 gprint(MQ([ck("Initializing...")]))
-#sy("cls")
-
-# Print Map
-# listen for arrow inputs
-# Queue movements on press
 
 lib.map_loader("main")
 lib.show_map()
@@ -33,7 +28,9 @@ time.sleep(1)
 Thread(target=lib.moveq_master).start()  # Start management for global movement package queue
 Thread(target=lib.pacmand).start()  # Start management for pacman movement
 Thread(target=lib.heat_seek_ai).start()  # Start management for heat-seeker ghost
-#Thread(target=lib.debug_map).start()
+#Thread(target=lib.debug_map).start()  # print debug map for movement visualization
+
+
 # Debug Code Below
 # print(lib.check(Coord(1, 1)))
 # print(lib.jsondump(class_data.movement("t", Coord(0, 0), Coord(0, 0))))

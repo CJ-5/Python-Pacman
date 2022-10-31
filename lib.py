@@ -8,8 +8,6 @@ import json
 import os
 import sys
 from pynput.keyboard import Key, Controller
-import curses
-from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 from os import system
@@ -103,7 +101,7 @@ def map_loader(map_id: str = None):
     # Ghost Generation
     # _aiv.heatseak_pos, _aiv.random_pos, _aiv.ghost2_pos, _aiv.ghost3_pos = [x for x in ghost_pos]
     class_data.ai_data.heatseek_pos = ghost_pos[0]
-    #print(class_data.ai_data.heatseak_pos.x)
+    # print(class_data.ai_data.heatseak_pos.x)
     # _aiv = class_data.ai_data
     # class_data.SysData.move_q.append(class_data.movement("G", class_data.ai_data.heatseak_pos, class_data.ai_data.heatseak_pos))
     # class_data.SysData.move_q.append(class_data.movement("g", _aiv.random_pos, _aiv.random_pos))
@@ -122,7 +120,7 @@ def moveq_master():  # Movement Queue Master
     x_off = class_data.map.map_x_off
     y_off = class_data.map.map_y_off + class_data.map.initial_y_off
     _so = class_data.map.char_spacing
-    #p_y_off = 2 if class_data.debug.coord_printout else 1  # Includes both coord printout and Point printout
+    # p_y_off = 2 if class_data.debug.coord_printout else 1  # Includes both coord printout and Point printout
     p_y_off = 2   # Includes both coord printout and Point printout
 
     while class_data.SysData.i_move_q:
@@ -132,7 +130,6 @@ def moveq_master():  # Movement Queue Master
         pkg_list = class_data.SysData.move_q
         for pkg in pkg_list:
             # Check for collisions
-
 
             # Update Position on backend
             if class_data.debug.map_backend_view:  # Debug
@@ -184,7 +181,7 @@ def debug_map():
     grid = Grid(matrix=class_data.SysData.path_find_map)
     start = grid.node(41, 8)
     end = grid.node(1, 1)
-    finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
+    finder = AStarFinder()
     path, runs = finder.find_path(start, end, grid)
     print(grid.grid_str(path=path, start=start, end=end))
     print(f"Runs: {runs}")
@@ -193,14 +190,16 @@ def debug_map():
 
 def find_path(s_pos: Coord, e_pos: Coord):
     grid = Grid(matrix=class_data.SysData.path_find_map)
-    #x_off = class_data.map.map_x_off  # Map X Offset
-    #y_off = class_data.map.map_y_off  # Map Y Offset
+
+    # x_off = class_data.map.map_x_off  # Map X Offset
+    # y_off = class_data.map.map_y_off  # Map Y Offset
+
     x_off = 1
     y_off = 1
 
     start = grid.node(s_pos.x + x_off, s_pos.y + y_off)
     end = grid.node(e_pos.x + x_off, e_pos.y + y_off)
-    finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
+    finder = AStarFinder()
     path, runs = finder.find_path(start, end, grid)
     # Debug Code
     # print('operations:', runs, 'path length:', len(path))
@@ -208,36 +207,6 @@ def find_path(s_pos: Coord, e_pos: Coord):
     # print(path)
     # print(class_data.SysData.move_q)
     return path
-
-
-def heat_seek_ai():  # Version 1.0 Heat-seeker ai
-    x_off = class_data.map.map_x_off  # Map X Offset
-    y_off = class_data.map.map_y_off  # Map Y Offset
-    while class_data.map.movement_active:
-        _pos = class_data.ai_data.heatseek_pos  # Ghost Position
-        _P = class_data.player_data.pos
-        _plpos = Coord(_P.x - 1, _P.y - 1)  # Player Position
-        _dist = get_distance(_pos, _plpos)
-
-        _path = find_path(class_data.ai_data.heatseek_pos, Coord(_plpos.x + 1, _plpos.y + 1))  # Do some black magic
-        path = [(x[0] - x_off, x[1] - y_off) for x in _path]
-        path = path[:-round(len(path)/3)]
-
-        # Queue movements to go towards player
-        last_dist = _dist
-        speed = 0.075
-        for c in path:
-            # _pos = class_data.ai_data.heatseek_pos  # Ghost Position
-            # _P = class_data.player_data.pos
-            # _plpos = Coord(_P.x - 1, _P.y - 1)  # Player Position
-            # dist = get_distance(_pos, _plpos)
-
-
-            time.sleep(speed)
-            _c = Coord(c[0], c[1])
-            class_data.SysData.move_q.append(movement("1", class_data.ai_data.heatseek_pos, _c, ghost_id=1))
-            class_data.ai_data.heatseek_pos = _c
-        remove_gpkg(1)  # Remove all old packages for ghost type
 
 
 def get_distance(object_pos0: Coord, object_pos1: Coord):  # Return absolute distance from p0 to p1
@@ -273,20 +242,13 @@ def remove_gpkg(ghost_id: int):  # Remove all packages with specified ghost id (
     class_data.SysData.move_q = list(filter(lambda pkg: pkg.ghost_id != ghost_id or pkg == pkg_next, class_data.SysData.move_q))
 
 
-
 def check(coord: class_data.Coord):  # Returns if move is valid or not
     x_off = class_data.map.map_x_off
     y_off = class_data.map.map_y_off
     return class_data.map.map_data.data[::-1][coord.y + y_off][coord.x + x_off] not in class_data.map.blocking_char
 
 
-def check_collision(coord: class_data.Coord):
-    x_off = class_data.map.map_x_off
-    y_off = class_data.map.map_y_off
-    return class_data.map.map_data.data[::-1][coord.y + y_off][coord.x + x_off] not in class_data.map.collision_tiles
-
-
-def pacmand():  # This makes pacman move
+def pacmand():  # Pacman Controller
     # Default Direction: Left
     """
     \x1b[{n}A : Up
