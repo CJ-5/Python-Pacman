@@ -29,8 +29,9 @@ gprint(MQ([ck("Initializing...")]))
 lib.map_loader("main")
 lib.show_map()
 
+time.sleep(1)
 Thread(target=lib.moveq_master).start()  # Start management for global movement package queue
-#Thread(target=lib.pacmand).start()  # Start management for pacman movement
+Thread(target=lib.pacmand).start()  # Start management for pacman movement
 Thread(target=lib.heat_seek_ai).start()  # Start management for heat-seeker ghost
 #Thread(target=lib.debug_map).start()
 # Debug Code Below

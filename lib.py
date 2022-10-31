@@ -1,3 +1,5 @@
+import math
+
 from colorama import Fore, Back, Style, init
 import time
 import class_data
@@ -10,6 +12,7 @@ import curses
 from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
+from os import system
 
 kb = Controller()
 
@@ -93,13 +96,14 @@ def map_loader(map_id: str = None):
             _l.append(int(tile not in class_data.map.blocking_char))
             if tile == "1":  # Check if tile is a Ghost Loader tile
                 ghost_pos.append(Coord(_x - 1, _y - 1))
+                #print(f"{Fore.GREEN}Found ghostpos{Fore.RESET} {ghost_pos}")
         class_data.SysData.path_find_map.append(_l)  # Add created row to path_find_map
     # print(class_data.SysData.path_find_map)
 
     # Ghost Generation
-    _aiv = class_data.ai_data
     # _aiv.heatseak_pos, _aiv.random_pos, _aiv.ghost2_pos, _aiv.ghost3_pos = [x for x in ghost_pos]
-    class_data.ai_data.heatseak_pos = ghost_pos[0]
+    class_data.ai_data.heatseek_pos = ghost_pos[0]
+    #print(class_data.ai_data.heatseak_pos.x)
     # _aiv = class_data.ai_data
     # class_data.SysData.move_q.append(class_data.movement("G", class_data.ai_data.heatseak_pos, class_data.ai_data.heatseak_pos))
     # class_data.SysData.move_q.append(class_data.movement("g", _aiv.random_pos, _aiv.random_pos))
@@ -189,8 +193,6 @@ def debug_map():
 
 def find_path(s_pos: Coord, e_pos: Coord):
     grid = Grid(matrix=class_data.SysData.path_find_map)
-    print("Starting pos", s_pos)
-    print("Ending pos", e_pos)
     #x_off = class_data.map.map_x_off  # Map X Offset
     #y_off = class_data.map.map_y_off  # Map Y Offset
     x_off = 1
@@ -199,11 +201,12 @@ def find_path(s_pos: Coord, e_pos: Coord):
     start = grid.node(s_pos.x + x_off, s_pos.y + y_off)
     end = grid.node(e_pos.x + x_off, e_pos.y + y_off)
     finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
-    path, _ = finder.find_path(start, end, grid)
+    path, runs = finder.find_path(start, end, grid)
     # Debug Code
     # print('operations:', runs, 'path length:', len(path))
     # print(grid.grid_str(path=path, start=start, end=end))
     # print(path)
+    # print(class_data.SysData.move_q)
     return path
 
 
@@ -211,19 +214,34 @@ def heat_seek_ai():  # Version 1.0 Heat-seeker ai
     x_off = class_data.map.map_x_off  # Map X Offset
     y_off = class_data.map.map_y_off  # Map Y Offset
     while class_data.map.movement_active:
-        _plpos = class_data.player_data.pos
-        _path = find_path(class_data.ai_data.heatseek_pos, Coord(_plpos.x + 1, _plpos.y + 1))  # Do some black magic
+        _pos = class_data.ai_data.heatseek_pos  # Ghost Position
+        _P = class_data.player_data.pos
+        _plpos = Coord(_P.x - 1, _P.y - 1)  # Player Position
+        _dist = get_distance(_pos, _plpos)
 
+        _path = find_path(class_data.ai_data.heatseek_pos, Coord(_plpos.x + 1, _plpos.y + 1))  # Do some black magic
         path = [(x[0] - x_off, x[1] - y_off) for x in _path]
+        path = path[:-round(len(path)/3)]
 
         # Queue movements to go towards player
+        last_dist = _dist
+        speed = 0.075
         for c in path:
-            class_data.SysData.move_q.append(movement("1", class_data.ai_data.heatseek_pos, Coord(c[0], c[1]), ghost_id=1))
-            class_data.ai_data.heatseek_pos = Coord(c[0], c[1])
-            time.sleep(0.1)
+            # _pos = class_data.ai_data.heatseek_pos  # Ghost Position
+            # _P = class_data.player_data.pos
+            # _plpos = Coord(_P.x - 1, _P.y - 1)  # Player Position
+            # dist = get_distance(_pos, _plpos)
 
-        time.sleep(4.5)
+
+            time.sleep(speed)
+            _c = Coord(c[0], c[1])
+            class_data.SysData.move_q.append(movement("1", class_data.ai_data.heatseek_pos, _c, ghost_id=1))
+            class_data.ai_data.heatseek_pos = _c
         remove_gpkg(1)  # Remove all old packages for ghost type
+
+
+def get_distance(object_pos0: Coord, object_pos1: Coord):  # Return absolute distance from p0 to p1
+    return math.sqrt(abs((object_pos0.x - object_pos1.x) ** 2 + (object_pos0.y - object_pos1.y) ** 2))
 
 
 def translate_char(char: str):  # Translate a backend value into a display character for tile in row:
@@ -234,7 +252,6 @@ def translate_char(char: str):  # Translate a backend value into a display chara
         " ": char_trans("·"),
         "@": char_trans(" ")
     }
-
     return d[char] if char in d.keys() else char_trans(char)
 
 
@@ -242,8 +259,19 @@ def get_char(coord: Coord):  # Get the backend value at the specified position
     return class_data.map.map_data[::-1][coord.y][coord.x]
 
 
-def remove_gpkg(ghost_id: int):
-    class_data.SysData.move_q = list(filter(lambda pkg: pkg.ghost_id != ghost_id, class_data.SysData.move_q))
+def remove_gpkg(ghost_id: int):  # Remove all packages with specified ghost id (ignores next package)
+    # class_data.map.movement_active = False
+    # class_data.SysData.i_move_q = False
+    # system("cls")
+
+    pkg_next = list(filter(lambda pkg: pkg.ghost_id == ghost_id, class_data.SysData.move_q))[0]
+    l = list(filter(lambda pkg: pkg.ghost_id != ghost_id or pkg == pkg_next, class_data.SysData.move_q))
+    # print("Old_List", class_data.SysData.move_q)
+    # print("next package", pkg_next)
+    # print("Valid", pkg_next == class_data.SysData.move_q[0])
+    # print("List", l)
+    class_data.SysData.move_q = list(filter(lambda pkg: pkg.ghost_id != ghost_id or pkg == pkg_next, class_data.SysData.move_q))
+
 
 
 def check(coord: class_data.Coord):  # Returns if move is valid or not
