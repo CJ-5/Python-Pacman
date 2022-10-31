@@ -91,7 +91,7 @@ def map_loader(map_id: str = None):
         _l = []  # Create local list to generate single row
         for _x, tile in enumerate(row):
             _l.append(int(tile not in class_data.map.blocking_char))
-            if tile == "1":
+            if tile == "1":  # Check if tile is a Ghost Loader tile
                 ghost_pos.append(Coord(_x - 1, _y - 1))
         class_data.SysData.path_find_map.append(_l)  # Add created row to path_find_map
     # print(class_data.SysData.path_find_map)
@@ -173,24 +173,28 @@ def moveq_master():  # Movement Queue Master
 
 
 def debug_map():
-    for row in class_data.SysData.path_find_map[::-1]:
-        for tile in row:
-            print(tile, end='')
-        print("\n", end='')
+    # for row in class_data.SysData.path_find_map[::-1]:
+    #     for tile in row:
+    #         print(tile, end='')
+    #     print("\n", end='')
     grid = Grid(matrix=class_data.SysData.path_find_map)
-    start = grid.node(1,1)
-    end = grid.node(42,1)
+    start = grid.node(41, 8)
+    end = grid.node(1, 1)
     finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
     path, runs = finder.find_path(start, end, grid)
     print(grid.grid_str(path=path, start=start, end=end))
+    print(f"Runs: {runs}")
     grid.cleanup()
 
 
 def find_path(s_pos: Coord, e_pos: Coord):
     grid = Grid(matrix=class_data.SysData.path_find_map)
-
+    print("Starting pos", s_pos)
+    print("Ending pos", e_pos)
+    #x_off = class_data.map.map_x_off  # Map X Offset
+    #y_off = class_data.map.map_y_off  # Map Y Offset
     x_off = 1
-    y_off = 1  # Map Y Offset
+    y_off = 1
 
     start = grid.node(s_pos.x + x_off, s_pos.y + y_off)
     end = grid.node(e_pos.x + x_off, e_pos.y + y_off)
@@ -206,19 +210,20 @@ def find_path(s_pos: Coord, e_pos: Coord):
 def heat_seek_ai():  # Version 1.0 Heat-seeker ai
     x_off = class_data.map.map_x_off  # Map X Offset
     y_off = class_data.map.map_y_off  # Map Y Offset
-    #while class_data.map.movement_active:
-    _path = find_path(class_data.ai_data.heatseek_pos, Coord(13, 5))  # Do some black magic
+    while class_data.map.movement_active:
+        _plpos = class_data.player_data.pos
+        _path = find_path(class_data.ai_data.heatseek_pos, Coord(_plpos.x + 1, _plpos.y + 1))  # Do some black magic
 
-    path = [(x[0] - x_off, x[1] - y_off) for x in _path]
+        path = [(x[0] - x_off, x[1] - y_off) for x in _path]
 
-    # Queue movements to go towards player
-    for c in path:
-        class_data.SysData.move_q.append(movement("1", class_data.ai_data.heatseek_pos, Coord(c[0], c[1]), ghost_id=1))
-        class_data.ai_data.heatseek_pos = Coord(c[0], c[1])
-        time.sleep(0.1)
+        # Queue movements to go towards player
+        for c in path:
+            class_data.SysData.move_q.append(movement("1", class_data.ai_data.heatseek_pos, Coord(c[0], c[1]), ghost_id=1))
+            class_data.ai_data.heatseek_pos = Coord(c[0], c[1])
+            time.sleep(0.1)
 
-    time.sleep(0.5)
-    remove_gpkg(1)  # Remove all old packages for ghost type
+        time.sleep(4.5)
+        remove_gpkg(1)  # Remove all old packages for ghost type
 
 
 def translate_char(char: str):  # Translate a backend value into a display character for tile in row:

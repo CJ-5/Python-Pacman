@@ -13,9 +13,9 @@
       "starting_pos": [0, 0],
       "map_data": [
           "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-          "X                                          X",
+          "X                          1               X",
           "X XXXXXXXXXXXX XXXXXXXXXXXX=XXXXXXXXXXXXXX X",
-          "X XXXXXXXXXXXX XXXXXXXXX1@@@@@@XXXXXXXXXXX X",
+          "X XXXXXXXXXXXX XXXXXXXXX@@@@@@@XXXXXXXXXXX X",
           "X XXXXXXXXXXXX XXXXXXXXX@@@@@@@XXXXXXXXXXX X",
           "X XXXXXXXXXXXX XXXXXXXXX@@@@@@@XXXXXXXXXXX X",
           "X XXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXX X",
