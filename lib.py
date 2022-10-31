@@ -86,15 +86,23 @@ def map_loader(map_id: str = None):
     cannot be moved on, if not a blocking character add a 1 to
     represent a spot that is (True) valid to use for pathfinding
     """
+    def update(coord: Coord):  # Add ghost to whitelists
+        class_data.map.ghost_house.append(coord)
+        class_data.map.ghost_collected.append(coord)
+
     class_data.SysData.path_find_map = []
     ghost_pos = []
     for _y, row in enumerate(gen_map[::-1]):
         _l = []  # Create local list to generate single row
         for _x, tile in enumerate(row):
-            _l.append(int(tile not in class_data.map.blocking_char))
+            _c = Coord(_x - 1, _y - 1)
+            _l.append(int(tile not in class_data.map.blocking_char or tile == "="))  # Path map generation
             if tile == "1":  # Check if tile is a Ghost Loader tile
-                ghost_pos.append(Coord(_x - 1, _y - 1))
-                #print(f"{Fore.GREEN}Found ghostpos{Fore.RESET} {ghost_pos}")
+                ghost_pos.append(_c)
+                update(_c)
+                # print(f"{Fore.GREEN}Found ghostpos {Fore.RESET}{ghost_pos}")
+            elif tile == "@":
+                update(_c)
         class_data.SysData.path_find_map.append(_l)  # Add created row to path_find_map
     # print(class_data.SysData.path_find_map)
 
@@ -232,13 +240,7 @@ def remove_gpkg(ghost_id: int):  # Remove all packages with specified ghost id (
     # class_data.map.movement_active = False
     # class_data.SysData.i_move_q = False
     # system("cls")
-
     pkg_next = list(filter(lambda pkg: pkg.ghost_id == ghost_id, class_data.SysData.move_q))[0]
-    l = list(filter(lambda pkg: pkg.ghost_id != ghost_id or pkg == pkg_next, class_data.SysData.move_q))
-    # print("Old_List", class_data.SysData.move_q)
-    # print("next package", pkg_next)
-    # print("Valid", pkg_next == class_data.SysData.move_q[0])
-    # print("List", l)
     class_data.SysData.move_q = list(filter(lambda pkg: pkg.ghost_id != ghost_id or pkg == pkg_next, class_data.SysData.move_q))
 
 
@@ -258,25 +260,28 @@ def pacmand():  # Pacman Controller
     """
     x_off = class_data.map.map_x_off
     y_off = class_data.map.map_y_off
+
     while class_data.map.movement_active:
-        _active = class_data.player_data.active_direction
-        x_diff = 1 if _active == "right" else -1 if _active == "left" else 0
-        y_diff = 1 if _active == "up" else -1 if _active == "down" else 0
-        _p = class_data.player_data.pos
-        new_coord = Coord(_p.x + x_diff, _p.y + y_diff)
-        if check(new_coord):
-            class_data.SysData.move_q.append(
-                class_data.movement(class_data.player_data.starting_tile, Coord(_p.x, _p.y), new_coord))
+        try:
+            _active = class_data.player_data.active_direction
+            x_diff = 1 if _active == "right" else -1 if _active == "left" else 0
+            y_diff = 1 if _active == "up" else -1 if _active == "down" else 0
+            _p = class_data.player_data.pos
+            new_coord = Coord(_p.x + x_diff, _p.y + y_diff)
+            if check(new_coord):
+                class_data.SysData.move_q.append(
+                    class_data.movement(class_data.player_data.starting_tile, Coord(_p.x, _p.y), new_coord))
 
-            class_data.player_data.pos = new_coord  # Update Player Coord
+                class_data.player_data.pos = new_coord  # Update Player Coord
 
-            # Add coordinate used list and add points
+                # Add coordinate used list and add points
 
-            if not new_coord in class_data.map.collected_coordinates:
-                class_data.player_data.points += 1
-                class_data.map.collected_coordinates.append(new_coord)
-
-        time.sleep(0.100)
+                if not new_coord in class_data.map.collected_coordinates:
+                    class_data.player_data.points += 1
+                    class_data.map.collected_coordinates.append(new_coord)
+            time.sleep(0.100)
+        except:
+            continue
 
 
 def show_map(map_in: class_data.map_obj = None):

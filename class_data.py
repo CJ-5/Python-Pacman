@@ -10,9 +10,10 @@ class Object:
 
 
 class debug:
-    ignore_file_check = True
-    coord_printout = True
-    map_backend_view = False
+    ignore_file_check = True  # Ignore environment file check
+    coord_printout = True  # Print Coordinate Printout
+    map_backend_view = False  # Print backend view of mapping
+    ai_printout = False  # Print pathfinding runs for each ai
 
 
 @dataclass()
@@ -41,11 +42,18 @@ class char_trans:
 @dataclass()
 class ai_data:
     scatter = False
+
     heatseek_pos: Coord = None  # ID: 1
     heatseek_last: str = None
-    random_pos: Coord = None    # ID: 2
+
+    intercept_pos: Coord = None    # ID: 2
+    intercept_last: str = None
+
     ghost2_pos: Coord = None    # ID: 3
-    ghost3_pos: Coord = None    # ID: 4
+    ghost2_last: str = None
+
+    random_pos: Coord = None    # ID: 4
+    random_last: str = None
 
 
 class map:  # Core Map Data
@@ -60,7 +68,10 @@ class map:  # Core Map Data
     blocking_char = ['X']  # List of characters that are not passable e.g a wall (Override by map loader)
     # default_tile = "·"  # Point default tile (Override by map loader)
     default_tile = " "  # Point default tile (Override by map loader)
+    default_point = "·"
     collected_coordinates = []
+    ghost_house = []
+    ghost_collected = []
     collision_tiles = []
 
 
