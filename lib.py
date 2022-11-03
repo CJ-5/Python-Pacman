@@ -217,8 +217,9 @@ def find_path(s_pos: Coord, e_pos: Coord):
     return path
 
 
-def get_distance(object_pos0: Coord, object_pos1: Coord):  # Return absolute distance from p0 to p1
-    return math.sqrt(abs((object_pos0.x - object_pos1.x) ** 2 + (object_pos0.y - object_pos1.y) ** 2))
+def get_distance(object_pos0: Coord, object_pos1: Coord, return_abs=True):  # Return absolute distance from p0 to p1
+    dist = (object_pos1.x - object_pos0.x) ** 2 + (object_pos1.y - object_pos0.y) ** 2
+    return math.sqrt(abs(dist) if return_abs else dist)
 
 
 def translate_char(char: str):  # Translate a backend value into a display character for tile in row:
@@ -244,10 +245,32 @@ def remove_gpkg(ghost_id: int):  # Remove all packages with specified ghost id (
     class_data.SysData.move_q = list(filter(lambda pkg: pkg.ghost_id != ghost_id or pkg == pkg_next, class_data.SysData.move_q))
 
 
+# Check if a certain coordinate is a valid movement [ACCOUNTS FOR OFFSET]
 def check(coord: class_data.Coord):  # Returns if move is valid or not
     x_off = class_data.map.map_x_off
     y_off = class_data.map.map_y_off
     return class_data.map.map_data.data[::-1][coord.y + y_off][coord.x + x_off] not in class_data.map.blocking_char
+
+
+def path_op(_path: list):
+    x_off = class_data.map.map_x_off  # Map X Offset
+    y_off = class_data.map.map_y_off  # Map Y Offset
+    path = [(m[0] - x_off, m[1] - y_off) for m in _path]  # Adjust for map offset
+    return path[:-round(len(path) / 3)]  # Optimize and return
+
+
+def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
+    for c in path:
+        # _pos = class_data.ai_data.heatseek_pos
+
+        time.sleep(speed)
+        _c = Coord(c[0], c[1])
+        # char = get_char(_pos)
+        oc = class_data.map.default_point if _pos not in class_data.map.ghost_collected \
+                                             and _c not in class_data.map.collected_coordinates else " "
+        class_data.SysData.move_q.append(movement("1", class_data.ai_data.heatseek_pos, _c, oc, ghost_id))
+        # class_data.ai_data.heatseek_pos = _c
+        return _c  # New position for calling ai
 
 
 def pacmand():  # Pacman Controller

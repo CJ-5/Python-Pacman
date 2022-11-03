@@ -39,21 +39,24 @@ class char_trans:
     colour: Fore = Fore.WHITE
 
 
-@dataclass()
 class ai_data:
     scatter = False
 
     heatseek_pos: Coord = None  # ID: 1
     heatseek_last: str = None
+    heatseek_speed: float = 0.075
 
     intercept_pos: Coord = None    # ID: 2
     intercept_last: str = None
+    intercept_speed: float = 0.1  # Adjust this
 
     ghost2_pos: Coord = None    # ID: 3
     ghost2_last: str = None
+    ghoat2_speed: float = 0  # Adjust this
 
     random_pos: Coord = None    # ID: 4
     random_last: str = None
+    random_speed: float = 0  # Adjust this
 
 
 class map:  # Core Map Data
@@ -99,7 +102,7 @@ class player_data:
     active_direction = "up"
     lives = 3  # Current life count
     points = 0
-    pos = Coord(0, 0)  # Current pacman coordinate
+    pos = Coord(0, 0)  # Current pacman coordinate / Starting pos
     starting_pos: Coord = None
     inv = []  # Various items that have been picked up
 

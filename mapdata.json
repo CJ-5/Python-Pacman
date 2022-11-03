@@ -1,13 +1,14 @@
 {
   "maps" : {
     "main": {
-      "map_desc": null,
+      "map_desc": "A Test Map for testing tests that require tests.",
       "name": "Test Map",
       "map_ghost_qty": 3,
       "innate_diff": 1,
       "x_off": 1,
       "y_off": 1,
       "additional_blocking": ["="],
+      "ghost_passover":["="],
       "collision_tiles": ["1"],
       "default_tile": "·",
       "starting_pos": [0, 0],
