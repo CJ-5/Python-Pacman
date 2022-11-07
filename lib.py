@@ -172,8 +172,8 @@ def moveq_master():  # Movement Queue Master
             print(f"{Fore.YELLOW}Points{Fore.RESET}: {Fore.GREEN}{class_data.player_data.points}{Fore.RESET}")
             if class_data.debug.coord_printout:
                 #print("{:<15}".format(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y}", end='\r'))
-                print(" " * 25, end='\r')
-                print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y}", end='\r')
+                print(" " * 40, end='\r')  # line reset
+                print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y} {Fore.RESET}[{Fore.LIGHTGREEN_EX}Error_Count{Fore.RESET}] {Fore.YELLOW}{class_data.SysData.global_err}{Fore.RESET}", end='\r')
             else:
                 print("\r", end='')
 
@@ -261,7 +261,13 @@ def path_op(_path: list):
 
 def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
     for c in path:
-        # _pos = class_data.ai_data.heatseek_pos
+        adat = class_data.ai_data
+        _pos = adat.heatseek_pos if ghost_id == 1 else adat.intercept_pos if ghost_id == 2 \
+            else adat.ghost2_pos if ghost_id == 3 else adat.random_pos if ghost_id == 4 else None
+
+
+        # c: Coordinate to move to
+        # Check for passover tiles
 
         time.sleep(speed)
         _c = Coord(c[0], c[1])
@@ -269,8 +275,17 @@ def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
         oc = class_data.map.default_point if _pos not in class_data.map.ghost_collected \
                                              and _c not in class_data.map.collected_coordinates else " "
         class_data.SysData.move_q.append(movement("1", class_data.ai_data.heatseek_pos, _c, oc, ghost_id))
-        # class_data.ai_data.heatseek_pos = _c
-        return _c  # New position for calling ai
+
+        # Set specified ghosts new position
+        if ghost_id == 1:  # Couldn't find a better way of doing this.
+            class_data.ai_data.heatseek_pos = _c
+        elif ghost_id == 2:
+            class_data.ai_data.intercept_pos = _c
+        elif ghost_id == 3:
+            class_data.ai_data.ghost2_pos = _c
+        elif ghost_id == 4:
+            class_data.ai_data.random_pos = _c
+
 
 
 def pacmand():  # Pacman Controller
@@ -304,6 +319,7 @@ def pacmand():  # Pacman Controller
                     class_data.map.collected_coordinates.append(new_coord)
             time.sleep(0.100)
         except:
+            class_data.SysData.global_err += 1
             continue
 
 

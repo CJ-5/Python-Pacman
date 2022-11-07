@@ -25,10 +25,6 @@ def heat_seek_ai():  # Version 1.3 Heat-seeker ai
             last_dist = _dist
             speed = 0.075
             # for c in path:
-            #     # _pos = class_data.ai_data.heatseek_pos  # Ghost Position
-            #     # _P = class_data.player_data.pos
-            #     # _plpos = Coord(_P.x - 1, _P.y - 1)  # Player Position
-            #     # dist = get_distance(_pos, _plpos)
             #     _pos = class_data.ai_data.heatseek_pos
             #
             #     time.sleep(speed)
@@ -38,8 +34,9 @@ def heat_seek_ai():  # Version 1.3 Heat-seeker ai
             #         and _c not in class_data.map.collected_coordinates else " "
             #     class_data.SysData.move_q.append(movement("1", class_data.ai_data.heatseek_pos, _c, oc, 1))
             #     class_data.ai_data.heatseek_pos = _c
-            class_data.ai_data.heatseek_pos = lib.queue_move(path, speed, 1, _pos)
+            lib.queue_move(path, speed, 1, _pos)
         except Exception:
+            class_data.SysData.global_err += 1
             continue
 
         remove_gpkg(1)  # Remove all old packages for ghost type
@@ -137,9 +134,7 @@ def intercept_ai():  # Version 1.1 Intercept ai
                     continue  # No viable path was found, continue to next run
                 else:  # Path is valid
                     class_data.ai_data.intercept_pos = lib.queue_move(path, class_data.ai_data.intercept_speed, 2, intercept)  # Queue Path
-
-
         except:
-            pass
+            class_data.SysData.global_err += 1
         time.sleep(4)
         lib.remove_gpkg(2)

@@ -112,4 +112,5 @@ class SysData:  # System Data
     i_move_q = True
     move_q = []  # Movement package queue
     path_find_map = []
+    global_err = 0
 

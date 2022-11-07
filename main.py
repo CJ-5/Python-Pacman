@@ -27,8 +27,8 @@ lib.show_map()
 
 time.sleep(1)
 Thread(target=lib.moveq_master).start()  # Start management for global movement package queue
-#Thread(target=lib.pacmand).start()  # Start management for pacman movement
-# Thread(target=ai.heat_seek_ai).start()  # Start management for heat-seeker ghost
+Thread(target=lib.pacmand).start()  # Start management for pacman movement
+Thread(target=ai.heat_seek_ai).start()  # Start management for heat-seeker ghost
 # Thread(target=ai.intercept_ai).start()  # Start management for intercept ghost
 # Thread(target=lib.debug_map).start()  # print debug map for movement visualization
 
