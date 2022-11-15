@@ -40,6 +40,12 @@ class char_trans:
 
 
 class ai_data:
+    """
+    Notes:
+        - Positioning: NOT RELATIVE, POSITIONING IS TRUE INDEX
+        - [ai_name]_last: The last tile they were on (for reprint)
+        - [ai_name]_speed: The offset speed for how fast the path movements are added to the queue
+    """
     scatter = False
 
     heatseek_pos: Coord = None  # ID: 1
@@ -48,7 +54,7 @@ class ai_data:
 
     intercept_pos: Coord = None    # ID: 2
     intercept_last: str = None
-    intercept_speed: float = 0.1  # Adjust this
+    intercept_speed: float = 0.1  # Adjust this?
 
     ghost2_pos: Coord = None    # ID: 3
     ghost2_last: str = None
@@ -102,7 +108,7 @@ class player_data:
     active_direction = "up"
     lives = 3  # Current life count
     points = 0
-    pos = Coord(0, 0)  # Current pacman coordinate / Starting pos
+    pos = Coord(0, 0)  # Current pacman coordinate / Starting pos [TRUE INDEX?]
     starting_pos: Coord = None
     inv = []  # Various items that have been picked up
 

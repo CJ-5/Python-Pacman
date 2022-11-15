@@ -95,8 +95,10 @@ def map_loader(map_id: str = None):
     for _y, row in enumerate(gen_map[::-1]):
         _l = []  # Create local list to generate single row
         for _x, tile in enumerate(row):
-            _c = Coord(_x - 1, _y - 1)
+            _c = Coord(_x - 1, _y - 1)  # True Coord (-1, is to bring it from count to true index)
             _l.append(int(tile not in class_data.map.blocking_char or tile == "="))  # Path map generation
+
+            # Ghost house gen (ensure that ghost does not reprint points in area)
             if tile == "1":  # Check if tile is a Ghost Loader tile
                 ghost_pos.append(_c)
                 update(_c)
@@ -108,6 +110,7 @@ def map_loader(map_id: str = None):
 
     # Ghost Generation
     # _aiv.heatseak_pos, _aiv.random_pos, _aiv.ghost2_pos, _aiv.ghost3_pos = [x for x in ghost_pos]
+    class_data.ai_data.intercept_pos = ghost_pos[0]
     class_data.ai_data.heatseek_pos = ghost_pos[0]
     # print(class_data.ai_data.heatseak_pos.x)
     # _aiv = class_data.ai_data
@@ -122,7 +125,7 @@ def jsondump(obj):
         sort_keys=True, indent=4)
 
 
-def moveq_master():  # Movement Queue Master
+def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
     # print("Movement Queue Master Running...")
     # print(Fore.RESET, end='\r')
     x_off = class_data.map.map_x_off
@@ -132,8 +135,8 @@ def moveq_master():  # Movement Queue Master
     p_y_off = 2   # Includes both coord printout and Point printout
 
     while class_data.SysData.i_move_q:
-        while not len(class_data.SysData.move_q):  # Loop Lock
-            continue
+        while len(class_data.SysData.move_q) == 0:  # Loop Lock
+            time.sleep(0.000000000001)  # Yep this is the single most important line. DO NOT REMOVE
 
         pkg_list = class_data.SysData.move_q
         for pkg in pkg_list:
@@ -145,6 +148,8 @@ def moveq_master():  # Movement Queue Master
 
             # class_data.map.map_data.data[::-1][_pos_y][_pos_x] = pkg.old_char
             # class_data.map.map_data.data[::-1][pos_y][pos_x] = pkg.tile_char
+
+            # Print and overwrite for characters on display (y_off with -2 to account for coord display)
             class_data.map.map_data.data[::-1][pkg.old_pos.y + y_off - 2][pkg.old_pos.x + x_off] = pkg.old_char
             class_data.map.map_data.data[::-1][pkg.new_pos.y + y_off - 2][pkg.new_pos.x + x_off] = pkg.tile_char
 
@@ -172,8 +177,8 @@ def moveq_master():  # Movement Queue Master
             print(f"{Fore.YELLOW}Points{Fore.RESET}: {Fore.GREEN}{class_data.player_data.points}{Fore.RESET}")
             if class_data.debug.coord_printout:
                 #print("{:<15}".format(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y}", end='\r'))
-                print(" " * 40, end='\r')  # line reset
-                print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y} {Fore.RESET}[{Fore.LIGHTGREEN_EX}Error_Count{Fore.RESET}] {Fore.YELLOW}{class_data.SysData.global_err}{Fore.RESET}", end='\r')
+                print(" " * 100, end='\r')  # line reset
+                print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y} {Fore.RESET}[{Fore.LIGHTGREEN_EX}Error_Count{Fore.RESET}] {Fore.YELLOW}{class_data.SysData.global_err}{Fore.RESET} Active_DIR: {class_data.player_data.active_direction}", end='\r')
             else:
                 print("\r", end='')
 
@@ -196,7 +201,7 @@ def debug_map():
     grid.cleanup()
 
 
-def find_path(s_pos: Coord, e_pos: Coord):
+def find_path(s_pos: Coord, e_pos: Coord):  # [TRUE INDEX]
     grid = Grid(matrix=class_data.SysData.path_find_map)
 
     # x_off = class_data.map.map_x_off  # Map X Offset
@@ -246,7 +251,7 @@ def remove_gpkg(ghost_id: int):  # Remove all packages with specified ghost id (
 
 
 # Check if a certain coordinate is a valid movement [ACCOUNTS FOR OFFSET]
-def check(coord: class_data.Coord):  # Returns if move is valid or not
+def check(coord: class_data.Coord):  # Returns if move is valid or not [TRUE INDEX]
     x_off = class_data.map.map_x_off
     y_off = class_data.map.map_y_off
     return class_data.map.map_data.data[::-1][coord.y + y_off][coord.x + x_off] not in class_data.map.blocking_char
