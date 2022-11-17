@@ -264,6 +264,18 @@ def path_op(_path: list):
     return path[:-round(len(path) / 3)]  # Optimize and return
 
 
+def debug_write(data: str, file):
+    # f = open("./debug.txt", "a")
+    file.write(data)
+    file.write("\n\n")
+    # file.flush()
+    #fd = os.open("debug.txt", os.O_CREAT | os.O_WRONLY | os.O_NONBLOCK)
+
+    #os.write(fd, "test".encode())
+    #os.close(fd)
+    #pass
+
+
 def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
     for c in path:
         adat = class_data.ai_data
@@ -279,7 +291,7 @@ def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
         # char = get_char(_pos)
         oc = class_data.map.default_point if _pos not in class_data.map.ghost_collected \
                                              and _c not in class_data.map.collected_coordinates else " "
-        class_data.SysData.move_q.append(movement("1", class_data.ai_data.heatseek_pos, _c, oc, ghost_id))
+        class_data.SysData.move_q.append(movement("1", _pos, _c, oc, ghost_id))
 
         # Set specified ghosts new position
         if ghost_id == 1:  # Couldn't find a better way of doing this.

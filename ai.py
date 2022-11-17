@@ -137,6 +137,10 @@ def intercept_ai_v1():  # Version 1.1 Intercept ai
 
 
 def intercept_ai_v2():
+    debug_file = open("./debug.txt", "a")
+    x_off = class_data.map.map_x_off  # Map X Offset
+    y_off = class_data.map.map_y_off  # Map Y Offset
+
     def intercept_path(s_pos: Coord, e_pos: Coord, player_pos: Coord, dire: str):  # [OFFSET] {UNTESTED}
         """
         This is a modified version of the lib.find_path algorithm, instead of finding a direct path
@@ -162,37 +166,65 @@ def intercept_ai_v2():
         # Generate map from global
         map = class_data.SysData.path_find_map
         char_stop = False
+        file_global = open("./debug.txt", "a")  # DEBUG
+
+        """
+        Generate invalid characters in the opposite direction of the player and use that
+        map for intercept processing. This will theoretically avoid the issue of the intercept
+        ai following the same path as heatseek.
+        """
+        itera = 0
         while not char_stop:  # Maybe optimize this?
+            map = class_data.SysData.path_find_map  # get fresh map
+            itera += 1
+            # x-axis / y-axis processing switch
             if mx_off != 0:
+                lib.debug_write("Horizontal Processing", file_global)
                 # Run x-axis processing
                 map_row = []
                 for x, tile in enumerate(map[player_pos.y][::mx_off]):  # Get row that the player is in (flip if left)
-                    if x > player_pos.x:
+                    if tile == 0:
+                        lib.debug_write("Found exit char H", file_global)
+                        char_stop = True  # break processing after iteration
+                    elif x > player_pos.x and not char_stop:
                         tile = 0  # invalidate tile
-                    map_row.append(tile[::mx_off])
+                    map_row.append(tile[::mx_off])  # Add tile to modified row
 
-                # Overwrite taken row with new data
-                map[player_pos.y] = map_row
+                map[player_pos.y] = map_row  # Overwrite original row with modified one
             else:
+                lib.debug_write("Vertical Processing", file_global)
                 # Run y-axis processing
                 map_new = []
                 for x, row in enumerate(map[::my_off]):
-                    if x > player_pos.y:
+                    if row[player_pos.x] == 0:
+                        lib.debug_write("Found exit char V", file_global)
+                        char_stop = True
+                    elif x > player_pos.y:
+                        lib.debug_write("No Exit char", file_global)
                         row[player_pos.x] = 0
                     map_new.append(row)
                 map = map_new
-                pass
 
-        grid = Grid(matrix=class_data.SysData.path_find_map)
+            # Write Compiled map to file
+            # lib.debug_write('\n'.join([''.join(x) for x in map]), debug_file)
+            lib.debug_write(f"Finished Edit: {itera}: Player_POS {class_data.player_data.pos} Dir: {class_data.player_data.active_direction}", file_global)
+            d = '\n'.join([''.join(y) for y in [[str(p) for p in z] for z in map]])
+            lib.debug_write(str(d), file_global)
+            class_data.SysData.global_err += 1
+            file_global.flush()
+            time.sleep(0.1)
+        lib.debug_write("Return Path", file_global)
+
+
+        grid = Grid(matrix=map)
         start = grid.node(s_pos.x, s_pos.y)
         end = grid.node(e_pos.x, e_pos.y)
         finder = AStarFinder()
         path, runs = finder.find_path(start, end, grid)
-
+        file_global.close()
         return path
 
-    x_off = class_data.map.map_x_off  # Map X Offset
-    y_off = class_data.map.map_y_off  # Map Y Offset
+
     while class_data.map.movement_active:
         try:
             player_dir = class_data.player_data.active_direction  # The player's active direction
@@ -211,16 +243,18 @@ def intercept_ai_v2():
             # Check if the move is valid
             if lib.check(intercept_coord):
                 # Generate path & Optimize
-                path = lib.path_op(lib.find_path(ai_pos, intercept_coord))
-
+                #path = lib.path_op(lib.find_path(ai_pos, intercept_coord))
+                # INTERCEPT PATH GEN _V2
+                path = lib.path_op(intercept_path(ai_pos, intercept_coord, ppos_true, player_dir))
                 # Queue path for movement processing
                 lib.queue_move(path, speed, 2, ai_pos)
             else:
                 class_data.SysData.global_err += 1
 
-            time.sleep(3)
-            # Remove current packages and re-run all calculations
+            # Remove and re-calculate
+            time.sleep(0.001)
             lib.remove_gpkg(2)
 
+
         except Exception:
-            pass
+            class_data.SysData.global_err += 1
