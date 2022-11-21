@@ -257,11 +257,15 @@ def check(coord: class_data.Coord):  # Returns if move is valid or not [TRUE IND
     return class_data.map.map_data.data[::-1][coord.y + y_off][coord.x + x_off] not in class_data.map.blocking_char
 
 
-def path_op(_path: list):
+def path_op(_path: list, op_div=3):
     x_off = class_data.map.map_x_off  # Map X Offset
     y_off = class_data.map.map_y_off  # Map Y Offset
     path = [(m[0] - x_off, m[1] - y_off) for m in _path]  # Adjust for map offset
-    return path[:-round(len(path) / 3)]  # Optimize and return
+    return path[:-round(len(path) // op_div)]  # Optimize and return
+
+
+def map_comp(map):
+    return '\n'.join([''.join(y) for y in [[str(p) for p in z] for z in map]])
 
 
 def debug_write(data: str, file):
