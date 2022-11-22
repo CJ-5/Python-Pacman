@@ -69,11 +69,10 @@ def intercept_ai_v2():
         map = copy.deepcopy(class_data.SysData.path_find_map)  # Create Deep Copy of Map
 
         """
-        Generate invalid characters in the opposite direction of the player and use that
-        map for intercept processing. This will theoretically avoid the issue of the intercept
-        ai following the same path as heatseek.
+        Generate invalid character in the opposite direction of the player and use that
+        map for intercept processing. This solves the issue of intercept acting the same
+        as heatseek
         """
-        itera = 0
 
         if mx_off != 0:  # X-Axis Processing
             # x_trigger = player_pos.x - mx_off  # Invert mx_off to check opposite direction
@@ -91,7 +90,7 @@ def intercept_ai_v2():
             pass
 
         # Write Compiled map to file  >DEBUG<
-        lib.debug_write(f"Finished Edit: {itera}: Player_POS_R {player_pos_r} Player_POS_T {player_pos} Dir: {class_data.player_data.active_direction}", file_global)
+        lib.debug_write(f"Finished Edit: Player_POS_R {player_pos_r} Player_POS_T {player_pos} Dir: {class_data.player_data.active_direction}", file_global)
         d = lib.map_comp(map)
         lib.debug_write(str(d), file_global)
         class_data.SysData.global_err += 1
@@ -131,9 +130,12 @@ def intercept_ai_v2():
             else:
                 class_data.SysData.global_err += 1
 
-            # Remove and re-calculate
+            # Remove ghost packages and re-calculate
             lib.remove_gpkg(2)
 
 
         except Exception:
             class_data.SysData.global_err += 1
+
+def clyde_ai():
+    pass

@@ -243,9 +243,6 @@ def get_char(coord: Coord):  # Get the backend value at the specified position
 
 
 def remove_gpkg(ghost_id: int):  # Remove all packages with specified ghost id (ignores next package)
-    # class_data.map.movement_active = False
-    # class_data.SysData.i_move_q = False
-    # system("cls")
     pkg_next = list(filter(lambda pkg: pkg.ghost_id == ghost_id, class_data.SysData.move_q))[0]
     class_data.SysData.move_q = list(filter(lambda pkg: pkg.ghost_id != ghost_id or pkg == pkg_next, class_data.SysData.move_q))
 
@@ -264,20 +261,13 @@ def path_op(_path: list, op_div=3):
     return path[:-round(len(path) // op_div)]  # Optimize and return
 
 
-def map_comp(map):
+def map_comp(map):  # DEBUG, Remove in production
     return '\n'.join([''.join(y) for y in [[str(p) for p in z] for z in map]])
 
 
 def debug_write(data: str, file):
-    # f = open("./debug.txt", "a")
     file.write(data)
     file.write("\n\n")
-    # file.flush()
-    #fd = os.open("debug.txt", os.O_CREAT | os.O_WRONLY | os.O_NONBLOCK)
-
-    #os.write(fd, "test".encode())
-    #os.close(fd)
-    #pass
 
 
 def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
