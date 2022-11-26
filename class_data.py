@@ -14,6 +14,9 @@ class debug:
     coord_printout = True  # Print Coordinate Printout
     map_backend_view = False  # Print backend view of mapping
     ai_printout = False  # Print pathfinding runs for each ai
+    gen_path = None  # Gen Path Blank data
+    distance = None  # Player -> Ai Distance
+    path_switch = None  # 2 Mode Path switch
 
 
 @dataclass()
@@ -42,27 +45,33 @@ class char_trans:
 class ai_data:
     """
     Notes:
-        - Positioning: NOT RELATIVE, POSITIONING IS TRUE INDEX
+        - Positioning: RELATIVE
         - [ai_name]_last: The last tile they were on (for reprint)
         - [ai_name]_speed: The offset speed for how fast the path movements are added to the queue
+        - [ai_dist]: The distance threshold that is checked before ai main path_get is used
     """
-    scatter = False
+    scatter = False  # Scatter mode toggle (Use Scatter path gen [Try to stay away from player])
+    _dist = 15.0  # Local distance setting for generic distance checking
 
     heatseek_pos: Coord = None  # ID: 1
     heatseek_last: str = None
     heatseek_speed: float = 0.075
+    heatseek_dist: float = _dist
 
     intercept_pos: Coord = None    # ID: 2
     intercept_last: str = None
-    intercept_speed: float = 0.1  # Adjust this?
+    intercept_speed: float = 0.13  # Adjust this?
+    intercept_dist: float = _dist
 
     ghost2_pos: Coord = None    # ID: 3
     ghost2_last: str = None
-    ghoat2_speed: float = 0  # Adjust this
+    ghost2_speed: float = 0  # Adjust this
+    ghost2_dist: float = None
 
     random_pos: Coord = None    # ID: 4
     random_last: str = None
     random_speed: float = 0  # Adjust this
+    random_dist: float = None
 
 
 class map:  # Core Map Data
@@ -75,9 +84,9 @@ class map:  # Core Map Data
     char_spacing = 2  # Map character spacing
     movement_active = True  # If movement should be active
     blocking_char = ['X']  # List of characters that are not passable e.g a wall (Override by map loader)
-    # default_tile = "·"  # Point default tile (Override by map loader)
     default_tile = " "  # Point default tile (Override by map loader)
-    default_point = "·"
+    vp_coord: list[Coord] = []  # Coordinates that are valid for movement with path_gen_v1. (Override by map loader)
+    default_point = "·"  # Point tile default char
     collected_coordinates = []
     ghost_house = []
     ghost_collected = []

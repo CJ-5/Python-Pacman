@@ -1,8 +1,9 @@
 import math
-
+import random
 from colorama import Fore, Back, Style, init
 import time
 import class_data
+import lib
 from class_data import MQ, Coord, movement, char_trans
 import json
 import os
@@ -41,6 +42,22 @@ def gprint(queue, speed: int = 25):
                 print(char, end='')
                 time.sleep(delay)
     print()  # Create new line
+
+
+def gen_path(ghost_id: int):
+    _g = class_data.ai_data
+
+    ghost_pos_index = {
+        1: _g.heatseek_pos,
+        2: _g.intercept_pos,
+        3: _g.ghost2_pos,
+        4: _g.random_pos
+    }
+
+    pos = ghost_pos_index[ghost_id]
+    final = random.choice(class_data.map.vp_coord)
+    path = lib.find_path(pos, final)
+    return path
 
 
 def map_loader(map_id: str = None):
@@ -86,7 +103,7 @@ def map_loader(map_id: str = None):
     cannot be moved on, if not a blocking character add a 1 to
     represent a spot that is (True) valid to use for pathfinding
     """
-    def update(coord: Coord):  # Add ghost to whitelists
+    def update(coord: Coord):  # Add ghost to available ghost position list
         class_data.map.ghost_house.append(coord)
         class_data.map.ghost_collected.append(coord)
 
@@ -95,8 +112,12 @@ def map_loader(map_id: str = None):
     for _y, row in enumerate(gen_map[::-1]):
         _l = []  # Create local list to generate single row
         for _x, tile in enumerate(row):
-            _c = Coord(_x - 1, _y - 1)  # True Coord (-1, is to bring it from count to true index)
-            _l.append(int(tile not in class_data.map.blocking_char or tile == "="))  # Path map generation
+            _block = tile in class_data.map.blocking_char
+            _c = Coord(_x - 1, _y - 1)  # Coord shift
+            _l.append(int(not _block or tile == "="))  # Path map generation
+
+            if not _block:
+                class_data.map.vp_coord.append(_c)
 
             # Ghost house gen (ensure that ghost does not reprint points in area)
             if tile == "1":  # Check if tile is a Ghost Loader tile
@@ -178,7 +199,8 @@ def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
             if class_data.debug.coord_printout:
                 #print("{:<15}".format(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y}", end='\r'))
                 print(" " * 100, end='\r')  # line reset
-                print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y} {Fore.RESET}[{Fore.LIGHTGREEN_EX}Error_Count{Fore.RESET}] {Fore.YELLOW}{class_data.SysData.global_err}{Fore.RESET} Active_DIR: {class_data.player_data.active_direction}", end='\r')
+                #print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y} {Fore.RESET}[{Fore.LIGHTGREEN_EX}Error_Count{Fore.RESET}] {Fore.YELLOW}{class_data.SysData.global_err}{Fore.RESET} Active_DIR: {class_data.player_data.active_direction}", end='\r')
+                print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] [Gen_Path: {Fore.LIGHTRED_EX}{class_data.debug.gen_path}{Fore.RESET}] [Distance: {Fore.LIGHTRED_EX}{class_data.debug.distance}{Fore.RESET}] [Dist_Chk: {Fore.LIGHTRED_EX}{class_data.debug.path_switch}{Fore.RESET}]", end='\r')
             else:
                 print("\r", end='')
 

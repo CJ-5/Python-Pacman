@@ -111,28 +111,43 @@ def intercept_ai_v2():
             ai_pos = class_data.ai_data.intercept_pos  # The AI's current position [TRUE INDEX]
             ppos_true = class_data.player_data.pos  # The Player's Current position [TRUE INDEX]
             dist = get_distance(ai_pos, ppos_true)  # absolute distance from the ghost to the player [TRUE INDEX]
+            dist_t = class_data.ai_data.intercept_dist  # Path_Gen switch distance threshold
             speed = class_data.ai_data.intercept_speed
+            dist_chk = dist < dist_t
 
-            # Get player direction offset
-            mx_off = 1 if player_dir == "right" else -1 if player_dir == "left" else 0  # Move X Offset
-            my_off = 1 if player_dir == "up" else -1 if player_dir == "down" else 0  # Move Y Offset
+            # DEBUG REMOVE THIS
+            class_data.debug.distance = dist
+            class_data.debug.path_switch = dist_chk
 
-            # Get position that will intercept player's movement
-            intercept_coord = Coord(ppos_true.x + mx_off, ppos_true.y + my_off)
 
-            # Check if the move is valid
-            if lib.check(intercept_coord):
-                # INTERCEPT PATH GEN _V2
-                path = lib.path_op(intercept_path(ai_pos, intercept_coord, ppos_true, player_dir), 2.7)
-
-                # Queue path for movement processing
+            def generic():
+                # Run Generic Path Gen
+                path = lib.path_op(lib.gen_path(2), 1.4)
                 lib.queue_move(path, speed, 2, ai_pos)
+
+            if dist_chk:
+                # Get player direction offset
+                mx_off = 1 if player_dir == "right" else -1 if player_dir == "left" else 0  # Move X Offset
+                my_off = 1 if player_dir == "up" else -1 if player_dir == "down" else 0  # Move Y Offset
+
+                # Get position that will intercept player's movement
+                intercept_coord = Coord(ppos_true.x + mx_off, ppos_true.y + my_off)
+
+                # Check if the move is valid
+                if lib.check(intercept_coord):
+                    # INTERCEPT PATH GEN _V2
+                    path = lib.path_op(intercept_path(ai_pos, intercept_coord, ppos_true, player_dir), 2.7)
+
+
+                    # Queue path for movement processing
+                    lib.queue_move(path, speed, 2, ai_pos)
+                else:
+                    class_data.SysData.global_err += 1
             else:
-                class_data.SysData.global_err += 1
+                generic()
 
             # Remove ghost packages and re-calculate
             lib.remove_gpkg(2)
-
 
         except Exception:
             class_data.SysData.global_err += 1
