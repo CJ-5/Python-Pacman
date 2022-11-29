@@ -11,7 +11,7 @@ class Object:
 
 class debug:
     ignore_file_check = True  # Ignore environment file check
-    coord_printout = True  # Print Coordinate Printout
+    coord_printout = False  # Print Coordinate Printout
     map_backend_view = False  # Print backend view of mapping
     ai_printout = False  # Print pathfinding runs for each ai
     gen_path = None  # Gen Path Blank data
@@ -52,6 +52,8 @@ class ai_data:
     """
     scatter = False  # Scatter mode toggle (Use Scatter path gen [Try to stay away from player])
     _dist = 15.0  # Local distance setting for generic distance checking
+    contact_pause = False  # If the player came in contact with the ghost and the threads should be paused
+    ghost_spawn_pos: list[Coord] = []  # List of coordinates where ghosts can spawn
 
     heatseek_pos: Coord = None  # ID: 1
     heatseek_last: str = None
@@ -62,6 +64,7 @@ class ai_data:
     intercept_last: str = None
     intercept_speed: float = 0.13  # Adjust this?
     intercept_dist: float = _dist
+    intercept_override_thr: float = 5.0
 
     ghost2_pos: Coord = None    # ID: 3
     ghost2_last: str = None
@@ -120,6 +123,7 @@ class player_data:
     pos = Coord(0, 0)  # Current pacman coordinate / Starting pos [TRUE INDEX?]
     starting_pos: Coord = None
     inv = []  # Various items that have been picked up
+    ghost_contact = True
 
 
 class SysData:  # System Data

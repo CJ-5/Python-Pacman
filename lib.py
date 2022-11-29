@@ -3,7 +3,6 @@ import random
 from colorama import Fore, Back, Style, init
 import time
 import class_data
-import lib
 from class_data import MQ, Coord, movement, char_trans
 import json
 import os
@@ -12,6 +11,7 @@ from pynput.keyboard import Key, Controller
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 from os import system
+from threading import Thread
 
 kb = Controller()
 
@@ -56,7 +56,7 @@ def gen_path(ghost_id: int):
 
     pos = ghost_pos_index[ghost_id]
     final = random.choice(class_data.map.vp_coord)
-    path = lib.find_path(pos, final)
+    path = find_path(pos, final)
     return path
 
 
@@ -131,14 +131,7 @@ def map_loader(map_id: str = None):
 
     # Ghost Generation
     # _aiv.heatseak_pos, _aiv.random_pos, _aiv.ghost2_pos, _aiv.ghost3_pos = [x for x in ghost_pos]
-    class_data.ai_data.intercept_pos = ghost_pos[0]
-    class_data.ai_data.heatseek_pos = ghost_pos[0]
-    # print(class_data.ai_data.heatseak_pos.x)
-    # _aiv = class_data.ai_data
-    # class_data.SysData.move_q.append(class_data.movement("G", class_data.ai_data.heatseak_pos, class_data.ai_data.heatseak_pos))
-    # class_data.SysData.move_q.append(class_data.movement("g", _aiv.random_pos, _aiv.random_pos))
-    # class_data.SysData.move_q.append(class_data.movement("H", _aiv.ghost2_pos, _aiv.ghost2_pos))
-    # print(class_data.ai_data.heatseak_pos)
+    class_data.ai_data.ghost_spawn_pos = ghost_pos
 
 
 def jsondump(obj):
@@ -147,12 +140,9 @@ def jsondump(obj):
 
 
 def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
-    # print("Movement Queue Master Running...")
-    # print(Fore.RESET, end='\r')
     x_off = class_data.map.map_x_off
     y_off = class_data.map.map_y_off + class_data.map.initial_y_off
     _so = class_data.map.char_spacing
-    # p_y_off = 2 if class_data.debug.coord_printout else 1  # Includes both coord printout and Point printout
     p_y_off = 2   # Includes both coord printout and Point printout
 
     while class_data.SysData.i_move_q:
@@ -167,9 +157,6 @@ def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
             if class_data.debug.map_backend_view:  # Debug
                 show_map()
 
-            # class_data.map.map_data.data[::-1][_pos_y][_pos_x] = pkg.old_char
-            # class_data.map.map_data.data[::-1][pos_y][pos_x] = pkg.tile_char
-
             # Print and overwrite for characters on display (y_off with -2 to account for coord display)
             class_data.map.map_data.data[::-1][pkg.old_pos.y + y_off - 2][pkg.old_pos.x + x_off] = pkg.old_char
             class_data.map.map_data.data[::-1][pkg.new_pos.y + y_off - 2][pkg.new_pos.x + x_off] = pkg.tile_char
@@ -178,9 +165,7 @@ def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
                 show_map()
                 continue
 
-            # print("Processing Package")
             # Remove Old Character
-
             print(Fore.RESET, end='')
             print(f"\x1b[{pkg.old_pos.y + y_off}A", end='')  # Move Y
             print(f"\x1b[{(pkg.old_pos.x + x_off) * _so}C", end='')  # Move X
@@ -197,7 +182,6 @@ def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
             print(Fore.RESET, end=f'\x1b[{p_y_off - 1}A\r')
             print(f"{Fore.YELLOW}Points{Fore.RESET}: {Fore.GREEN}{class_data.player_data.points}{Fore.RESET}")
             if class_data.debug.coord_printout:
-                #print("{:<15}".format(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y}", end='\r'))
                 print(" " * 100, end='\r')  # line reset
                 #print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y} {Fore.RESET}[{Fore.LIGHTGREEN_EX}Error_Count{Fore.RESET}] {Fore.YELLOW}{class_data.SysData.global_err}{Fore.RESET} Active_DIR: {class_data.player_data.active_direction}", end='\r')
                 print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] [Gen_Path: {Fore.LIGHTRED_EX}{class_data.debug.gen_path}{Fore.RESET}] [Distance: {Fore.LIGHTRED_EX}{class_data.debug.distance}{Fore.RESET}] [Dist_Chk: {Fore.LIGHTRED_EX}{class_data.debug.path_switch}{Fore.RESET}]", end='\r')
@@ -298,13 +282,10 @@ def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
         _pos = adat.heatseek_pos if ghost_id == 1 else adat.intercept_pos if ghost_id == 2 \
             else adat.ghost2_pos if ghost_id == 3 else adat.random_pos if ghost_id == 4 else None
 
-
         # c: Coordinate to move to
         # Check for passover tiles
-
         time.sleep(speed)
         _c = Coord(c[0], c[1])
-        # char = get_char(_pos)
         oc = class_data.map.default_point if _pos not in class_data.map.ghost_collected \
                                              and _c not in class_data.map.collected_coordinates else " "
         class_data.SysData.move_q.append(movement("1", _pos, _c, oc, ghost_id))
@@ -320,10 +301,10 @@ def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
             class_data.ai_data.random_pos = _c
 
 
-
 def pacmand():  # Pacman Controller
     # Default Direction: Left
     """
+    Cursor Movment Exit Codes
     \x1b[{n}A : Up
     \x1b[{n}B : Down
     \x1b[{n}C : Right
@@ -346,7 +327,6 @@ def pacmand():  # Pacman Controller
                 class_data.player_data.pos = new_coord  # Update Player Coord
 
                 # Add coordinate used list and add points
-
                 if not new_coord in class_data.map.collected_coordinates:
                     class_data.player_data.points += 1
                     class_data.map.collected_coordinates.append(new_coord)
@@ -368,7 +348,7 @@ def show_map(map_in: class_data.map_obj = None):
         _l = len(row) if len(row) > _l else _l  # Get max out of all rows
         for tile in row:
             if tile == "X":
-                map_out += Fore.RED + f"{'■':<{local_spacing}}" + Fore.RESET
+                map_out += Back.RED + Fore.LIGHTRED_EX + f"{'■':<{local_spacing}}" + Fore.RESET + Back.RESET
             elif tile == " ":
                 map_out += f"{'·':<{local_spacing}}"
             elif tile == "0":
@@ -382,9 +362,6 @@ def show_map(map_in: class_data.map_obj = None):
     # Panel Printing
     print(f"{map_in.name:^{_l * local_spacing}}")
     print(map_out, flush=True)
-    # if class_data.debug.coord_printout:
-        # print("")
-        # print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}0 {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}0")
 
 
 # Main Key listener
@@ -400,8 +377,5 @@ def press_process(key):
             class_data.player_data.active_direction = "down"
         elif key.char == "d":
             class_data.player_data.active_direction = "right"
-
     except Exception:
-        #print("Failed")
         pass
-
