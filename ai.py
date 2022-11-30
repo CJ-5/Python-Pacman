@@ -14,16 +14,24 @@ def heat_seek_ai():  # Version 1.3 Heat-seeker ai
     while class_data.map.movement_active:
         try:
             _pos = class_data.ai_data.heatseek_pos  # Ghost Position
-            _P = class_data.player_data.pos
-            _plpos = Coord(_P.x - x_off, _P.y - y_off)  # Player Position [OFFSET]
-            _dist = get_distance(_pos, _plpos)
+            _P = class_data.player_data.pos  # Current Player Position [OFFSET]
+            _plpos = Coord(_P.x - x_off, _P.y - y_off)  # Player Position [TRUE INDEX]
+            _dist = get_distance(_pos, _plpos)  # Distance from ghost to player
+            speed = class_data.ai_data.heatseek_speed  # Queue Speed
+            dist_thr = class_data.ai_data.heatseek_dist  # Distance check threshold
 
-            _path = find_path(class_data.ai_data.heatseek_pos, _P)  # Do some black magic [TRUE INDEX]
-            path = lib.path_op(_path)  # Optimise path (basically just take 33% of the path lol)
+            def generic():  # Get Random Path
+                lib.queue_move(lib.path_op(lib.gen_path(1), 1.4), speed, 1, _pos)
 
-            # Queue movements to go towards player
-            speed = 0.075
-            lib.queue_move(path, speed, 1, _pos)
+            if _dist <= dist_thr:
+                generic()
+            else:
+                # Generate Path
+                _path = find_path(class_data.ai_data.heatseek_pos, _P)  # Do some black magic [TRUE INDEX]
+                path = lib.path_op(_path)  # Optimize path (basically just take 33% of the path lol)
+
+                # Queue movements to go towards player
+                lib.queue_move(path, speed, 1, _pos)
         except Exception:
             time.sleep(0.1)
             continue

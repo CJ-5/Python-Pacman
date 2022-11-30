@@ -3,10 +3,12 @@ import random
 from colorama import Fore, Back, Style, init
 import time
 import class_data
+import lib
 from class_data import MQ, Coord, movement, char_trans
 import json
 import os
 import sys
+import copy
 from pynput.keyboard import Key, Controller
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
@@ -149,7 +151,8 @@ def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
         while len(class_data.SysData.move_q) == 0:  # Loop Lock
             time.sleep(0.000000000001)  # Yep this is the single most important line. DO NOT REMOVE
 
-        pkg_list = class_data.SysData.move_q
+        # pkg_list = class_data.SysData.move_q
+        pkg_list = copy.deepcopy(class_data.SysData.move_q)
         for pkg in pkg_list:
             # Check for collisions
 
@@ -165,6 +168,9 @@ def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
                 show_map()
                 continue
 
+            if not class_data.map.movement_active:
+                break
+
             # Remove Old Character
             print(Fore.RESET, end='')
             print(f"\x1b[{pkg.old_pos.y + y_off}A", end='')  # Move Y
@@ -179,8 +185,9 @@ def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
             print(f"\x1b[{pkg.new_pos.y + y_off}B", end='\r')  # Reset X and Y
 
             # Coordinate Display Update
+            _pd = class_data.player_data
             print(Fore.RESET, end=f'\x1b[{p_y_off - 1}A\r')
-            print(f"{Fore.YELLOW}Points{Fore.RESET}: {Fore.GREEN}{class_data.player_data.points}{Fore.RESET}")
+            print(f"{Fore.YELLOW}Lives{Fore.RESET}: {Fore.LIGHTRED_EX}{_pd.lives}{Fore.RESET}/{Fore.RED}{_pd.max_lives} | {Fore.YELLOW}Points{Fore.RESET}: {Fore.GREEN}{class_data.player_data.points}{Fore.RESET}")
             if class_data.debug.coord_printout:
                 print(" " * 100, end='\r')  # line reset
                 #print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y} {Fore.RESET}[{Fore.LIGHTGREEN_EX}Error_Count{Fore.RESET}] {Fore.YELLOW}{class_data.SysData.global_err}{Fore.RESET} Active_DIR: {class_data.player_data.active_direction}", end='\r')
@@ -255,6 +262,12 @@ def remove_gpkg(ghost_id: int):  # Remove all packages with specified ghost id (
 
 # Check if a certain coordinate is a valid movement [ACCOUNTS FOR OFFSET]
 def check(coord: class_data.Coord):  # Returns if move is valid or not [TRUE INDEX]
+    """
+    Check if a certain coordinate is a valid movement [ACCOUNTS FOR OFFSET]
+
+    :param coord: The coordiante to check
+    :return: True or False
+    """
     x_off = class_data.map.map_x_off
     y_off = class_data.map.map_y_off
     return class_data.map.map_data.data[::-1][coord.y + y_off][coord.x + x_off] not in class_data.map.blocking_char
@@ -278,6 +291,8 @@ def debug_write(data: str, file):
 
 def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
     for c in path:
+        if class_data.map.movement_active is False: break
+
         adat = class_data.ai_data
         _pos = adat.heatseek_pos if ghost_id == 1 else adat.intercept_pos if ghost_id == 2 \
             else adat.ghost2_pos if ghost_id == 3 else adat.random_pos if ghost_id == 4 else None
@@ -299,41 +314,6 @@ def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
             class_data.ai_data.ghost2_pos = _c
         elif ghost_id == 4:
             class_data.ai_data.random_pos = _c
-
-
-def pacmand():  # Pacman Controller
-    # Default Direction: Left
-    """
-    Cursor Movment Exit Codes
-    \x1b[{n}A : Up
-    \x1b[{n}B : Down
-    \x1b[{n}C : Right
-    \x1b[{n}D : Left
-    """
-    x_off = class_data.map.map_x_off
-    y_off = class_data.map.map_y_off
-
-    while class_data.map.movement_active:
-        try:
-            _active = class_data.player_data.active_direction
-            x_diff = 1 if _active == "right" else -1 if _active == "left" else 0
-            y_diff = 1 if _active == "up" else -1 if _active == "down" else 0
-            _p = class_data.player_data.pos
-            new_coord = Coord(_p.x + x_diff, _p.y + y_diff)
-            if check(new_coord):
-                class_data.SysData.move_q.append(
-                    class_data.movement(class_data.player_data.starting_tile, Coord(_p.x, _p.y), new_coord))
-
-                class_data.player_data.pos = new_coord  # Update Player Coord
-
-                # Add coordinate used list and add points
-                if not new_coord in class_data.map.collected_coordinates:
-                    class_data.player_data.points += 1
-                    class_data.map.collected_coordinates.append(new_coord)
-            time.sleep(0.100)
-        except:
-            class_data.SysData.global_err += 1
-            continue
 
 
 def show_map(map_in: class_data.map_obj = None):

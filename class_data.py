@@ -57,14 +57,14 @@ class ai_data:
 
     heatseek_pos: Coord = None  # ID: 1
     heatseek_last: str = None
-    heatseek_speed: float = 0.075
+    heatseek_speed: float = 0.13
     heatseek_dist: float = _dist
 
     intercept_pos: Coord = None    # ID: 2
     intercept_last: str = None
     intercept_speed: float = 0.13  # Adjust this?
     intercept_dist: float = _dist
-    intercept_override_thr: float = 5.0
+    intercept_override_thr: float = 5.0  # Overrides threshold and initiates heatseek path_gen
 
     ghost2_pos: Coord = None    # ID: 3
     ghost2_last: str = None
@@ -119,6 +119,7 @@ class player_data:
     spawned = False
     active_direction = "up"
     lives = 3  # Current life count
+    max_lives = 3  # Max life count
     points = 0
     pos = Coord(0, 0)  # Current pacman coordinate / Starting pos [TRUE INDEX?]
     starting_pos: Coord = None
