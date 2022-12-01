@@ -36,7 +36,7 @@ def heat_seek_ai():  # Version 1.3 Heat-seeker ai
             time.sleep(0.1)
             continue
 
-        remove_gpkg(1)  # Remove all old packages for ghost type
+        remove_gpkg(1)  # Remove all old packages for heatseek ghost
 
 
 def intercept_ai_v2():
@@ -59,7 +59,6 @@ def intercept_ai_v2():
         s_pos = Coord(s_pos.x + x_off, s_pos.y + y_off)  # TRUE INDEX
         e_pos = Coord(e_pos.x + x_off, e_pos.y + y_off)  # TRUE INDEX
         player_pos = Coord(player_pos.x + x_off, player_pos.y + y_off)  # TRUE INDEX
-        player_pos_r = class_data.player_data.pos  # RELATIVE PULL
 
         # Generate map from global
         map = copy.deepcopy(class_data.SysData.path_find_map)  # Create Deep Copy of Map
@@ -88,7 +87,7 @@ def intercept_ai_v2():
             player_dir = class_data.player_data.active_direction  # The player's active direction
             ai_pos = class_data.ai_data.intercept_pos  # The AI's current position [TRUE INDEX]
             ppos_true = class_data.player_data.pos  # The Player's Current position [TRUE INDEX]
-            dist = round(get_distance(ai_pos, ppos_true))  # absolute distance from the ghost to the player [TRUE INDEX]
+            dist = round(get_distance(ai_pos, ppos_true))  # absolute distance from the ghost to the player
             dist_t = class_data.ai_data.intercept_dist  # Path_Gen switch distance threshold
             speed = class_data.ai_data.intercept_speed  # Speed dividend at which position changes are queued
             dist_chk = dist < dist_t  # Distance threshold check
@@ -129,6 +128,7 @@ def intercept_ai_v2():
 
         except Exception:
             class_data.SysData.global_err += 1
+
 
 def clyde_ai():
     pass

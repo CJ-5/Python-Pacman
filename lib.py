@@ -293,7 +293,7 @@ def debug_write(data: str, file):
 
 
 def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
-
+    n_old = " "
     for c in path:
         if class_data.map.movement_active is False: break  # Stop Movement Queueing on Collision
 
@@ -310,9 +310,14 @@ def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
         _c = Coord(c[0], c[1])
         _ref = class_data.map.ref_coord
 
+        """
+        Old Coordinate Tile Setting
+        $ -> Cherry
+        """
+
         oc = Fore.RED + "$" + Fore.RESET if _pos in _ref["$"] \
             else "=" if _pos == class_data.map.ghost_gate else class_data.map.default_point if _pos not in class_data.map.ghost_collected \
-            and _c not in class_data.map.collected_coordinates else " "
+            and _pos not in class_data.map.collected_coordinates else " "
 
 
         # Set new coordinates tile value
