@@ -11,12 +11,13 @@ class Object:
 
 class debug:
     ignore_file_check = True  # Ignore environment file check
-    coord_printout = False  # Print Coordinate Printout
+    coord_printout = True  # Print Coordinate Printout
     map_backend_view = False  # Print backend view of mapping
     ai_printout = False  # Print pathfinding runs for each ai
     gen_path = None  # Gen Path Blank data
     distance = None  # Player -> Ai Distance
     path_switch = None  # 2 Mode Path switch
+    test_val = None
 
 
 @dataclass()
@@ -56,23 +57,25 @@ class ai_data:
     ghost_spawn_pos: list[Coord] = []  # List of coordinates where ghosts can spawn
 
     heatseek_pos: Coord = None  # ID: 1
-    heatseek_last: str = None
+    heatseek_last: str = " "
     heatseek_speed: float = 0.13
     heatseek_dist: float = _dist
+    heatseek_g_last: Coord = None
 
     intercept_pos: Coord = None    # ID: 2
-    intercept_last: str = None
+    intercept_last: str = " "
     intercept_speed: float = 0.13  # Adjust this?
     intercept_dist: float = _dist
     intercept_override_thr: float = 5.0  # Overrides threshold and initiates heatseek path_gen
+    intercept_g_last: Coord = None
 
     ghost2_pos: Coord = None    # ID: 3
-    ghost2_last: str = None
+    ghost2_last: str = " "
     ghost2_speed: float = 0  # Adjust this
     ghost2_dist: float = None
 
     random_pos: Coord = None    # ID: 4
-    random_last: str = None
+    random_last: str = " "
     random_speed: float = 0  # Adjust this
     random_dist: float = None
 
@@ -90,6 +93,8 @@ class map:  # Core Map Data
     default_tile = " "  # Point default tile (Override by map loader)
     vp_coord: list[Coord] = []  # Coordinates that are valid for movement with path_gen_v1. (Override by map loader)
     default_point = "·"  # Point tile default char
+    ghost_gate: Coord = None  # Coordinate of ghost house gate
+    ref_coord = {"$": []}  # Refferal tiles. (Specifies which tile have special tiles to print)
     collected_coordinates = []
     ghost_house = []
     ghost_collected = []

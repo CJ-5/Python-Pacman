@@ -128,6 +128,8 @@ def map_loader(map_id: str = None):
                 # print(f"{Fore.GREEN}Found ghostpos {Fore.RESET}{ghost_pos}")
             elif tile == "@":
                 update(_c)
+            elif tile == "=": # Ghost House Gate
+                class_data.map.ghost_gate = _c
         class_data.SysData.path_find_map.append(_l)  # Add created row to path_find_map
     # print(class_data.SysData.path_find_map)
 
@@ -191,7 +193,8 @@ def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
             if class_data.debug.coord_printout:
                 print(" " * 100, end='\r')  # line reset
                 #print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y} {Fore.RESET}[{Fore.LIGHTGREEN_EX}Error_Count{Fore.RESET}] {Fore.YELLOW}{class_data.SysData.global_err}{Fore.RESET} Active_DIR: {class_data.player_data.active_direction}", end='\r')
-                print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] [Gen_Path: {Fore.LIGHTRED_EX}{class_data.debug.gen_path}{Fore.RESET}] [Distance: {Fore.LIGHTRED_EX}{class_data.debug.distance}{Fore.RESET}] [Dist_Chk: {Fore.LIGHTRED_EX}{class_data.debug.path_switch}{Fore.RESET}]", end='\r')
+                # print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] [Gen_Path: {Fore.LIGHTRED_EX}{class_data.debug.gen_path}{Fore.RESET}] [Distance: {Fore.LIGHTRED_EX}{class_data.debug.distance}{Fore.RESET}] [Dist_Chk: {Fore.LIGHTRED_EX}{class_data.debug.path_switch}{Fore.RESET}]", end='\r')
+                print(f"{class_data.debug.test_val}", end='\r')
             else:
                 print("\r", end='')
 
@@ -252,7 +255,7 @@ def translate_char(char: str):  # Translate a backend value into a display chara
 
 
 def get_char(coord: Coord):  # Get the backend value at the specified position
-    return class_data.map.map_data[::-1][coord.y][coord.x]
+    return class_data.map.map_data.data[::-1][coord.y][coord.x]
 
 
 def remove_gpkg(ghost_id: int):  # Remove all packages with specified ghost id (ignores next package)
@@ -290,19 +293,33 @@ def debug_write(data: str, file):
 
 
 def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
+
     for c in path:
-        if class_data.map.movement_active is False: break
+        if class_data.map.movement_active is False: break  # Stop Movement Queueing on Collision
 
         adat = class_data.ai_data
         _pos = adat.heatseek_pos if ghost_id == 1 else adat.intercept_pos if ghost_id == 2 \
             else adat.ghost2_pos if ghost_id == 3 else adat.random_pos if ghost_id == 4 else None
 
+        _last = adat.heatseek_last if ghost_id == 1 else adat.intercept_last if ghost_id == 2 \
+            else adat.ghost2_last if ghost_id == 3 else adat.random_pos if ghost_id == 4 else None
+
         # c: Coordinate to move to
         # Check for passover tiles
         time.sleep(speed)
         _c = Coord(c[0], c[1])
-        oc = class_data.map.default_point if _pos not in class_data.map.ghost_collected \
-                                             and _c not in class_data.map.collected_coordinates else " "
+        _ref = class_data.map.ref_coord
+
+        oc = Fore.RED + "$" + Fore.RESET if _pos in _ref["$"] \
+            else "=" if _pos == class_data.map.ghost_gate else class_data.map.default_point if _pos not in class_data.map.ghost_collected \
+            and _c not in class_data.map.collected_coordinates else " "
+
+
+        # Set new coordinates tile value
+        _f = Coord(_c.x + 1, _c.y + 1)
+
+        # oc = _last  # Use Last Old Tile from last iteration
+        # n_pos = translate_char(get_char(_f)).value  # Converts offset back to true index
         class_data.SysData.move_q.append(movement("1", _pos, _c, oc, ghost_id))
 
         # Set specified ghosts new position
@@ -336,7 +353,7 @@ def show_map(map_in: class_data.map_obj = None):
             elif tile == "@":
                 map_out += f"{' ':<{local_spacing}}"
             else:
-                map_out += f"{tile:<{local_spacing}}"
+                map_out += f"{tile:<{local_spacing}}"  # Return Exact tile
         map_out += "\n"
 
     # Panel Printing

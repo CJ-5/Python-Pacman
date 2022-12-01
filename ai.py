@@ -88,7 +88,7 @@ def intercept_ai_v2():
             player_dir = class_data.player_data.active_direction  # The player's active direction
             ai_pos = class_data.ai_data.intercept_pos  # The AI's current position [TRUE INDEX]
             ppos_true = class_data.player_data.pos  # The Player's Current position [TRUE INDEX]
-            dist = get_distance(ai_pos, ppos_true)  # absolute distance from the ghost to the player [TRUE INDEX]
+            dist = round(get_distance(ai_pos, ppos_true))  # absolute distance from the ghost to the player [TRUE INDEX]
             dist_t = class_data.ai_data.intercept_dist  # Path_Gen switch distance threshold
             speed = class_data.ai_data.intercept_speed  # Speed dividend at which position changes are queued
             dist_chk = dist < dist_t  # Distance threshold check

@@ -15,6 +15,7 @@ import timeit
 from threading import Thread
 import cursor
 import ai
+import pacman_func
 
 
 def ghost_init():
@@ -27,7 +28,7 @@ def ghost_init():
 
     # Start Management Threads
     Thread(target=ai.heat_seek_ai).start()  # Start management for heat-seeker ghost
-    Thread(target=ai.intercept_ai_v2).start()  # Start management for intercept ghost
+    # Thread(target=ai.intercept_ai_v2).start()  # Start management for intercept ghost
     # Thread(target=ai.clyde_ai).start()  # Start management for clyde ghost
 
 file_global = open("./debug.txt", "a")
