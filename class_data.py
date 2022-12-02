@@ -52,7 +52,7 @@ class ai_data:
         - [ai_dist]: The distance threshold that is checked before ai main path_get is used
     """
     scatter = False  # Scatter mode toggle (Use Scatter path gen [Try to stay away from player])
-    _dist = 15.0  # Local distance setting for generic distance checking
+    _dist = 10.0  # Local distance setting for generic distance checking
     contact_pause = False  # If the player came in contact with the ghost and the threads should be paused
     ghost_spawn_pos: list[Coord] = []  # List of coordinates where ghosts can spawn
 
@@ -95,8 +95,9 @@ class map:  # Core Map Data
     default_point = "·"  # Point tile default char
     ghost_gate: Coord = None  # Coordinate of ghost house gate
     ref_coord = {"$": []}  # Refferal tiles. (Specifies which tile have special tiles to print)
-    collected_coordinates = []
-    ghost_house = []
+    points_avail: int = None  # The total amount of points that are available for collection
+    collected_coordinates = []  # Where the player has already been and collected points
+    ghost_house = []  # Ghost house coordinates
     ghost_collected = []
     collision_tiles = []
 
@@ -106,21 +107,21 @@ class movement:
     tile_char: str  # The value of the tile / tile character
     old_pos: Coord  # Position the tile is currently / old position
     new_pos: Coord  # Where tile is being moved / new position
-    old_char: str = map.default_tile
+    old_char: str = map.default_tile  # Movement old tile value
     ghost_id: int = 0  # Specifies if the package is a movement for a ghost, use 0 if it is a player
 
 
 @dataclass()
 class Item:
-    name: str
-    desc: str = None
-    qty: int = 1
-    max_qty: int = 1
+    name: str   # Item name
+    desc: str = None  # Item Description
+    qty: int = 1  # Item given quantity
+    max_qty: int = 1  # Item Max Quantity
     type: int = 0  # Item type [Boost, Life, Ghost Orb]
 
 
 class player_data:
-    starting_tile = "○"
+    starting_tile = "○"  # Player's tile
     spawned = False
     active_direction = "up"
     lives = 3  # Current life count

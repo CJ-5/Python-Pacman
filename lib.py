@@ -3,7 +3,6 @@ import random
 from colorama import Fore, Back, Style, init
 import time
 import class_data
-import lib
 from class_data import MQ, Coord, movement, char_trans
 import json
 import os
@@ -118,17 +117,19 @@ def map_loader(map_id: str = None):
             _c = Coord(_x - 1, _y - 1)  # Coord shift
             _l.append(int(not _block or tile == "="))  # Path map generation
 
-            if not _block:
+            if not _block:  # Adds coordinate to list of valid generic coordinates
                 class_data.map.vp_coord.append(_c)
 
-            # Ghost house gen (ensure that ghost does not reprint points in area)
+            # Tile functions
             if tile == "1":  # Check if tile is a Ghost Loader tile
                 ghost_pos.append(_c)
                 update(_c)
                 # print(f"{Fore.GREEN}Found ghostpos {Fore.RESET}{ghost_pos}")
-            elif tile == "@":
+            elif tile == "@":  # Non-Point Blank space
                 update(_c)
-            elif tile == "=": # Ghost House Gate
+            elif tile == "$":  # Cherry tile
+                class_data.map.ref_coord["$"].append(_c)
+            elif tile == "=":  # Ghost House Gate
                 class_data.map.ghost_gate = _c
         class_data.SysData.path_find_map.append(_l)  # Add created row to path_find_map
     # print(class_data.SysData.path_find_map)
@@ -141,6 +142,10 @@ def map_loader(map_id: str = None):
 def jsondump(obj):
     return json.dumps(obj, default=lambda o: o.__dict__,
         sort_keys=True, indent=4)
+
+
+def init_val():  # Initiate All Starting Values in class_data
+    pass
 
 
 def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
@@ -192,7 +197,7 @@ def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
             print(f"{Fore.YELLOW}Lives{Fore.RESET}: {Fore.LIGHTRED_EX}{_pd.lives}{Fore.RESET}/{Fore.RED}{_pd.max_lives} | {Fore.YELLOW}Points{Fore.RESET}: {Fore.GREEN}{class_data.player_data.points}{Fore.RESET}")
             if class_data.debug.coord_printout:
                 print(" " * 100, end='\r')  # line reset
-                #print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y} {Fore.RESET}[{Fore.LIGHTGREEN_EX}Error_Count{Fore.RESET}] {Fore.YELLOW}{class_data.SysData.global_err}{Fore.RESET} Active_DIR: {class_data.player_data.active_direction}", end='\r')
+                # print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y} {Fore.RESET}[{Fore.LIGHTGREEN_EX}Error_Count{Fore.RESET}] {Fore.YELLOW}{class_data.SysData.global_err}{Fore.RESET} Active_DIR: {class_data.player_data.active_direction}", end='\r')
                 # print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] [Gen_Path: {Fore.LIGHTRED_EX}{class_data.debug.gen_path}{Fore.RESET}] [Distance: {Fore.LIGHTRED_EX}{class_data.debug.distance}{Fore.RESET}] [Dist_Chk: {Fore.LIGHTRED_EX}{class_data.debug.path_switch}{Fore.RESET}]", end='\r')
                 print(f"{class_data.debug.test_val}", end='\r')
             else:
@@ -247,9 +252,10 @@ def translate_char(char: str):  # Translate a backend value into a display chara
     d = {
         "X": char_trans("■", Fore.RED),
         "0": char_trans(class_data.player_data.starting_tile, Fore.LIGHTGREEN_EX),
-        "1": char_trans("1", Fore.LIGHTBLUE_EX),
+        "1": char_trans("ᗣ", Fore.LIGHTBLUE_EX),
         " ": char_trans("·"),
-        "@": char_trans(" ")
+        "@": char_trans(" "),
+        "$": char_trans("$", Fore.LIGHTCYAN_EX)
     }
     return d[char] if char in d.keys() else char_trans(char)
 
@@ -268,7 +274,7 @@ def check(coord: class_data.Coord):  # Returns if move is valid or not [TRUE IND
     """
     Check if a certain coordinate is a valid movement [ACCOUNTS FOR OFFSET]
 
-    :param coord: The coordiante to check
+    :param coord: The coordinate to check
     :return: True or False
     """
     x_off = class_data.map.map_x_off
@@ -293,7 +299,6 @@ def debug_write(data: str, file):
 
 
 def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
-    n_old = " "
     for c in path:
         if class_data.map.movement_active is False: break  # Stop Movement Queueing on Collision
 
@@ -304,28 +309,28 @@ def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
         _last = adat.heatseek_last if ghost_id == 1 else adat.intercept_last if ghost_id == 2 \
             else adat.ghost2_last if ghost_id == 3 else adat.random_pos if ghost_id == 4 else None
 
-        # c: Coordinate to move to
-        # Check for passover tiles
         time.sleep(speed)
         _c = Coord(c[0], c[1])
-        _ref = class_data.map.ref_coord
+        _ref = class_data.map.ref_coord  # Reference Coords
 
         """
-        Old Coordinate Tile Setting
+        Old Coordinate Tile Setting (More soon?)
         $ -> Cherry
         """
+        d_cherry = translate_char("$")
+        t_cherry = d_cherry.colour + d_cherry.value + Fore.RESET
 
-        oc = Fore.RED + "$" + Fore.RESET if _pos in _ref["$"] \
-            else "=" if _pos == class_data.map.ghost_gate else class_data.map.default_point if _pos not in class_data.map.ghost_collected \
-            and _pos not in class_data.map.collected_coordinates else " "
-
+        # Old tile EVAL
+        oc = t_cherry if _pos in _ref["$"] and _pos not in class_data.map.collected_coordinates \
+            else "=" if _pos == class_data.map.ghost_gate else class_data.map.default_point if _pos not in \
+            class_data.map.ghost_collected and _pos not in class_data.map.collected_coordinates else " "
 
         # Set new coordinates tile value
         _f = Coord(_c.x + 1, _c.y + 1)
 
         # oc = _last  # Use Last Old Tile from last iteration
         # n_pos = translate_char(get_char(_f)).value  # Converts offset back to true index
-        class_data.SysData.move_q.append(movement("1", _pos, _c, oc, ghost_id))
+        class_data.SysData.move_q.append(movement("", _pos, _c, oc, ghost_id))
 
         # Set specified ghosts new position
         if ghost_id == 1:  # Couldn't find a better way of doing this.
@@ -350,13 +355,16 @@ def show_map(map_in: class_data.map_obj = None):
         _l = len(row) if len(row) > _l else _l  # Get max out of all rows
         for tile in row:
             if tile == "X":
-                map_out += Back.RED + Fore.LIGHTRED_EX + f"{'■':<{local_spacing}}" + Fore.RESET + Back.RESET
+                map_out += Back.RED + Fore.LIGHTRED_EX + f"{f'■':<{local_spacing}}" + Fore.RESET + Back.RESET
             elif tile == " ":
                 map_out += f"{'·':<{local_spacing}}"
             elif tile == "0":
                 map_out += f"{class_data.player_data.starting_tile:<{local_spacing}}"
             elif tile == "@":
                 map_out += f"{' ':<{local_spacing}}"
+            elif tile == "$":
+                char_data = translate_char("$")
+                map_out += char_data.colour + f"{char_data.value:<{local_spacing}}" + Fore.RESET
             else:
                 map_out += f"{tile:<{local_spacing}}"  # Return Exact tile
         map_out += "\n"

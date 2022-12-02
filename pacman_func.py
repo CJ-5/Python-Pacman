@@ -29,13 +29,19 @@ def pacmand():  # Pacman Logic Controller
             ghost_coord_null = [_ai.heatseek_pos, _ai.intercept_pos, _ai.ghost2_pos, _ai.random_pos]
             # ghost_coords = [(_pos if _pos is None else Coord(0, 0)) for _pos in ghost_coord_null]
             ghost_coords = ghost_coord_null
-            pl_collision = True in [lib.get_distance(_p_true, _pos) <= collision_thr if _pos is not None else False for _pos in ghost_coords]
+            pl_collision = True in [round(lib.get_distance(_p_true, _pos)) <= collision_thr if _pos is not None else False for _pos in ghost_coords]
 
             # Collision Checking
             if pl_collision:  # See if a collision has happened
                 class_data.map.movement_active = False
+                lives = class_data.player_data.lives
+                if lives <= 0:
+                    # Player is dead, Reinitiale Level 1
+                    pass
+                else:
+                    lives -= 1
 
-                # Player has been hit by ghost
+                # Player has been hit by ghost, re-initiate all data with life -1
 
             if check(new_coord):
                 class_data.SysData.move_q.append(
@@ -48,6 +54,6 @@ def pacmand():  # Pacman Logic Controller
                     class_data.player_data.points += 1
                     class_data.map.collected_coordinates.append(new_coord)
             time.sleep(0.100)  # Pacman Speed adjustment
-        except:
+        except Exception:
             class_data.SysData.global_err += 1
             continue

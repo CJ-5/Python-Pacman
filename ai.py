@@ -23,7 +23,8 @@ def heat_seek_ai():  # Version 1.3 Heat-seeker ai
             def generic():  # Get Random Path
                 lib.queue_move(lib.path_op(lib.gen_path(1), 1.4), speed, 1, _pos)
 
-            if _dist <= dist_thr:
+            # Path Mode Switcher
+            if _dist >= dist_thr:
                 generic()
             else:
                 # Generate Path
@@ -32,11 +33,12 @@ def heat_seek_ai():  # Version 1.3 Heat-seeker ai
 
                 # Queue movements to go towards player
                 lib.queue_move(path, speed, 1, _pos)
+
+            remove_gpkg(1)  # Remove all old packages for heatseek ghost
         except Exception:
             time.sleep(0.1)
             continue
-
-        remove_gpkg(1)  # Remove all old packages for heatseek ghost
+    exit(-1)  # Code has been killed
 
 
 def intercept_ai_v2():
@@ -87,10 +89,10 @@ def intercept_ai_v2():
             player_dir = class_data.player_data.active_direction  # The player's active direction
             ai_pos = class_data.ai_data.intercept_pos  # The AI's current position [TRUE INDEX]
             ppos_true = class_data.player_data.pos  # The Player's Current position [TRUE INDEX]
-            dist = round(get_distance(ai_pos, ppos_true))  # absolute distance from the ghost to the player
+            dist = get_distance(ai_pos, ppos_true)  # absolute distance from the ghost to the player
             dist_t = class_data.ai_data.intercept_dist  # Path_Gen switch distance threshold
             speed = class_data.ai_data.intercept_speed  # Speed dividend at which position changes are queued
-            dist_chk = dist < dist_t  # Distance threshold check
+            dist_chk = dist <= dist_t  # Distance threshold check
 
             # DEBUG REMOVE THIS IN PRODUCTION
             class_data.debug.distance = dist
@@ -99,7 +101,7 @@ def intercept_ai_v2():
             def generic():  # Get Random Path
                 lib.queue_move(lib.path_op(lib.gen_path(2), 1.4), speed, 2, ai_pos)
 
-            if dist_chk:
+            if dist_chk:  # Player is within distance
                 # Get player direction offset
                 mx_off = 1 if player_dir == "right" else -1 if player_dir == "left" else 0  # Move X Offset
                 my_off = 1 if player_dir == "up" else -1 if player_dir == "down" else 0  # Move Y Offset
@@ -114,7 +116,7 @@ def intercept_ai_v2():
 
                     # Queue path for movement processing
                     lib.queue_move(path, speed, 2, ai_pos)
-                else:
+                else:  # Player is outside of distance
                     _path = lib.find_path(ai_pos, ppos_true)
                     if len(_path) < class_data.ai_data.intercept_override_thr:
                         lib.queue_move(lib.path_op(_path), speed, 2, ai_pos)
@@ -128,7 +130,7 @@ def intercept_ai_v2():
 
         except Exception:
             class_data.SysData.global_err += 1
-
+    exit(-1) # Code has been killed
 
 def clyde_ai():
     pass
