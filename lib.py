@@ -153,14 +153,15 @@ def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
     y_off = class_data.map.map_y_off + class_data.map.initial_y_off
     _so = class_data.map.char_spacing
     p_y_off = 2   # Includes both coord printout and Point printout
-
-    while class_data.SysData.i_move_q:
+    g_pkg_list = []
+    while class_data.map.movement_active:
         while len(class_data.SysData.move_q) == 0:  # Loop Lock
             time.sleep(0.000000000001)  # Yep this is the single most important line. DO NOT REMOVE
 
-        # pkg_list = class_data.SysData.move_q
+        #pkg_list = class_data.SysData.move_q
         pkg_list = copy.deepcopy(class_data.SysData.move_q)
         for pkg in pkg_list:
+            g_pkg_list.append(pkg)
             # Check for collisions
 
             # Update Position on backend
@@ -203,8 +204,10 @@ def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
             else:
                 print("\r", end='')
 
-        for pk in pkg_list:
-            class_data.SysData.move_q.remove(pk)
+        for pk in g_pkg_list:
+            if class_data.map.movement_active:
+                class_data.SysData.move_q.remove(pk)
+        g_pkg_list.clear()
 
 
 def debug_map():
@@ -252,7 +255,7 @@ def translate_char(char: str):  # Translate a backend value into a display chara
     d = {
         "X": char_trans("■", Fore.RED),
         "0": char_trans(class_data.player_data.starting_tile, Fore.LIGHTGREEN_EX),
-        "1": char_trans("ᗣ", Fore.LIGHTBLUE_EX),
+        "1": char_trans("☺", Fore.LIGHTBLUE_EX),
         " ": char_trans("·"),
         "@": char_trans(" "),
         "$": char_trans("$", Fore.LIGHTCYAN_EX)
@@ -330,7 +333,7 @@ def queue_move(path: list, speed: float, ghost_id: int, _pos: Coord):
 
         # oc = _last  # Use Last Old Tile from last iteration
         # n_pos = translate_char(get_char(_f)).value  # Converts offset back to true index
-        class_data.SysData.move_q.append(movement("", _pos, _c, oc, ghost_id))
+        class_data.SysData.move_q.append(movement(translate_char("1").value, _pos, _c, oc, ghost_id))
 
         # Set specified ghosts new position
         if ghost_id == 1:  # Couldn't find a better way of doing this.
@@ -355,18 +358,18 @@ def show_map(map_in: class_data.map_obj = None):
         _l = len(row) if len(row) > _l else _l  # Get max out of all rows
         for tile in row:
             if tile == "X":
-                map_out += Back.RED + Fore.LIGHTRED_EX + f"{f'■':<{local_spacing}}" + Fore.RESET + Back.RESET
+                map_out += Back.RED + Fore.LIGHTRED_EX + f"{f'■':^{local_spacing}}" + Fore.RESET + Back.RESET
             elif tile == " ":
-                map_out += f"{'·':<{local_spacing}}"
+                map_out += f"{'·':^{local_spacing}}"
             elif tile == "0":
-                map_out += f"{class_data.player_data.starting_tile:<{local_spacing}}"
+                map_out += f"{class_data.player_data.starting_tile:^{local_spacing}}"
             elif tile == "@":
-                map_out += f"{' ':<{local_spacing}}"
+                map_out += f"{' ':^{local_spacing}}"
             elif tile == "$":
                 char_data = translate_char("$")
-                map_out += char_data.colour + f"{char_data.value:<{local_spacing}}" + Fore.RESET
+                map_out += char_data.colour + f"{char_data.value:^{local_spacing}}" + Fore.RESET
             else:
-                map_out += f"{tile:<{local_spacing}}"  # Return Exact tile
+                map_out += f"{tile:^{local_spacing}}"  # Return Exact tile
         map_out += "\n"
 
     # Panel Printing
@@ -389,3 +392,4 @@ def press_process(key):
             class_data.player_data.active_direction = "right"
     except Exception:
         pass
+
