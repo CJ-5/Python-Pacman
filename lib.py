@@ -26,10 +26,13 @@ def gprint(queue, speed: int = 25):
     if type(queue) is not MQ:
         # Converts raw string into MQ format
         queue = MQ([(queue, None)])
+
     delay = speed / 1000  # Seconds to milliseconds conversion
     # Used to index color by string key
     colors_list = {"red": Fore.RED, "green": Fore.GREEN, "yellow": Fore.YELLOW, "blue": Fore.BLUE,
                    "magenta": Fore.MAGENTA, "cyan": Fore.CYAN, "white": Fore.WHITE}
+
+
     for msg in queue.messages:
         if msg[1] is not None:
             # if color printing is specified

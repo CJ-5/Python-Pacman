@@ -94,7 +94,7 @@ class map:  # Core Map Data
     vp_coord: list[Coord] = []  # Coordinates that are valid for movement with path_gen_v1. (Override by map loader)
     default_point = "·"  # Point tile default char
     ghost_gate: Coord = None  # Coordinate of ghost house gate
-    ref_coord = {"$": []}  # Refferal tiles. (Specifies which tile have special tiles to print)
+    ref_coord = {"$": []}  # Referral tiles. (Specifies which tile have special tiles to print)
     points_avail: int = None  # The total amount of points that are available for collection
     collected_coordinates = []  # Where the player has already been and collected points
     ghost_house = []  # Ghost house coordinates
@@ -130,13 +130,14 @@ class player_data:
     pos = Coord(0, 0)  # Current pacman coordinate / Starting pos [TRUE INDEX?]
     starting_pos: Coord = None
     inv = []  # Various items that have been picked up
-    ghost_contact = True
+    ghost_contact = False
 
 
 class SysData:  # System Data
     kb_listen = None
     i_move_q = True
     move_q = []  # Movement package queue
-    path_find_map = []
-    global_err = 0
+    path_find_map = []  # Path finding source map
+    global_err = 0   # Global Error DEBUG
+    collision_pause = False  # Collision check pause lock
 
