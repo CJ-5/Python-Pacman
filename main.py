@@ -35,4 +35,3 @@ if __name__ == "__main__":
     with keyboard.Listener(on_press=lib.press_process) as listener:
         listener.join()
 
-

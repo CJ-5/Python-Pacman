@@ -18,8 +18,8 @@ def ghost_init():
     # class_data.ai_data.random_pos = _pos[3]
 
     # Start Management Threads
-    Thread(target=heat_seek_ai).start()  # Start management for heat-seeker ghost
-    # Thread(target=intercept_ai_v2).start()  # Start management for intercept ghost
+    # Thread(target=heat_seek_ai).start()  # Start management for heat-seeker ghost
+    # Thread(target=intercept_ai).start()  # Start management for intercept ghost
     # Thread(target=clyde_ai).start()  # Start management for clyde ghost
 
 
@@ -56,7 +56,7 @@ def heat_seek_ai():  # Version 1.3 Heat-seeker ai
     exit(-1)  # Code has been killed
 
 
-def intercept_ai_v2():
+def intercept_ai():
     x_off = class_data.map.map_x_off  # Map X Offset
     y_off = class_data.map.map_y_off  # Map Y Offset
 

@@ -95,7 +95,7 @@ class map:  # Core Map Data
     default_point = "·"  # Point tile default char
     ghost_gate: Coord = None  # Coordinate of ghost house gate
     ref_coord = {"$": []}  # Referral tiles. (Specifies which tile have special tiles to print)
-    points_avail: int = None  # The total amount of points that are available for collection
+    points_avail: int = 0  # The total amount of points that are available for collection
     collected_coordinates = []  # Where the player has already been and collected points
     ghost_house = []  # Ghost house coordinates
     ghost_collected = []

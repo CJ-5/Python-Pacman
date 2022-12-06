@@ -7,8 +7,10 @@ from os import system
 from threading import Thread
 from class_data import movement
 
+
 def movewatch_start():
     Thread(target=lib.moveq_master).start()  # Start management for global movement package queue
+
 
 def script_init(start_move=True):
     if start_move:
@@ -49,6 +51,14 @@ def collision_watcher():
                     class_data.player_data.lives -= 1
                     life_down()
                     return
+
+
+            # Point Checking
+            if class_data.player_data.points >= class_data.map.points_avail:
+                class_data.map.movement_active = False  # Pause Movements.
+                player_win()  # Player has collected all points on map, initiate win event.
+                exit(-69)  # Stop Thread.
+
             time.sleep(0.00000001)
 
         time.sleep(0.001)
@@ -57,7 +67,7 @@ def collision_watcher():
 def pacmand():  # Pacman Logic Controller
     # Default Direction: Left
     """
-    Cursor Movment Exit Codes
+    Cursor Movement Exit Codes
     \x1b[{n}A : Up
     \x1b[{n}B : Down
     \x1b[{n}C : Right
@@ -74,27 +84,6 @@ def pacmand():  # Pacman Logic Controller
             _p = class_data.player_data.pos  # Player Coordinate [OFFSET]
             _p_true = Coord(_p.x + x_off, _p.y + y_off)  # True Player Coordinate [TRUE INDEX]
             new_coord = Coord(_p.x + x_diff, _p.y + y_diff)  # The next position of the player
-            collision_thr = 1.2  # Collision threshold, equal to or less than will trigger collision event
-
-            #_ai = class_data.ai_data
-            #ghost_coord_null = [_ai.heatseek_pos, _ai.intercept_pos, _ai.ghost2_pos, _ai.random_pos]
-            # ghost_coords = [(_pos if _pos is None else Coord(0, 0)) for _pos in ghost_coord_null]
-            # pl_collision = True in [round(lib.get_distance(_p_true, _pos), 1) <= collision_thr if _pos is not None else False for _pos in ghost_coord_null]
-            #
-            # # Collision Checking
-            # if pl_collision:  # See if a collision has happened
-            #     class_data.map.movement_active = False
-            #     lives = class_data.player_data.lives
-            #     if lives == 1:  # Player was already on their last life. Player is dead
-            #         # Player is dead, Re-initiate Level 1
-            #
-            #         time.sleep(1)
-            #         playerdeath()
-            #         return
-            #     else:
-            #         class_data.player_data.lives -= 1
-            #         lifedown()
-            #         return
 
             # Movement processing check
             if check(new_coord):
@@ -167,8 +156,13 @@ def life_down():  # Player death event
     clear_cache()  # Clear all cached old data
     resume_points()  # Queue movements for point resume
     movewatch_start()  # Start the floating collision watcher
-    time.sleep(len(class_data.SysData.move_q) * 0.2)  # Dynamic wait, ensure all load packages are finished processing
+    time.sleep(len(class_data.SysData.move_q) * 0.05)  # Dynamic wait, ensure all load packages are finished processing
     player_reset()  # Player data reset
     ai.ghost_init()  # Re-Initiate all ghost management threads
     script_init(False)  # Re-Initiate General Management Threads
 
+
+def player_win():  # Player has collected all points
+    time.sleep(1)
+    system("cls")
+    lib.gprint("YOU WIN!")

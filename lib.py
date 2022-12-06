@@ -132,8 +132,11 @@ def map_loader(map_id: str = None):
                 update(_c)
             elif tile == "$":  # Cherry tile
                 class_data.map.ref_coord["$"].append(_c)
+                class_data.map.points_avail += 1
             elif tile == "=":  # Ghost House Gate
                 class_data.map.ghost_gate = _c
+            elif tile == " ":  # Point tile
+                class_data.map.points_avail += 1
         class_data.SysData.path_find_map.append(_l)  # Add created row to path_find_map
     # print(class_data.SysData.path_find_map)
 
@@ -142,7 +145,7 @@ def map_loader(map_id: str = None):
     class_data.ai_data.ghost_spawn_pos = ghost_pos
 
 
-def jsondump(obj):
+def jsondump(obj):  # DEBUG, Remove in production
     return json.dumps(obj, default=lambda o: o.__dict__,
         sort_keys=True, indent=4)
 
