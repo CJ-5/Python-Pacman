@@ -112,6 +112,7 @@ def map_loader(map_id: str = None):
         class_data.map.ghost_collected.append(coord)
 
     class_data.SysData.path_find_map = []
+    class_data.map.points_avail = 0
     ghost_pos = []
     for _y, row in enumerate(gen_map[::-1]):
         _l = []  # Create local list to generate single row
@@ -201,7 +202,7 @@ def moveq_master():  # Movement Queue Master [TRUE INDEX for positioning]
             # Coordinate Display Update
             _pd = class_data.player_data
             print(Fore.RESET, end=f'\x1b[{p_y_off - 1}A\r')
-            print(f"{Fore.YELLOW}Lives{Fore.RESET}: {Fore.LIGHTRED_EX}{_pd.lives}{Fore.RESET}/{Fore.RED}{_pd.max_lives} | {Fore.YELLOW}Points{Fore.RESET}: {Fore.GREEN}{class_data.player_data.points}{Fore.RESET}")
+            print(f"{Fore.YELLOW}Lives{Fore.RESET}: {Fore.LIGHTRED_EX}{_pd.lives}{Fore.RESET}/{Fore.RED}{_pd.max_lives} | {Fore.YELLOW}Points{Fore.RESET}: {Fore.GREEN}{class_data.player_data.points} | {class_data.map.points_avail}{Fore.RESET}")
             if class_data.debug.coord_printout:
                 print(" " * 100, end='\r')  # line reset
                 # print(f"[{Fore.YELLOW}DEBUG{Fore.RESET}] {Fore.RED}X{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.x} {Fore.RED}Y{Fore.RESET}: {Fore.LIGHTGREEN_EX}{class_data.player_data.pos.y} {Fore.RESET}[{Fore.LIGHTGREEN_EX}Error_Count{Fore.RESET}] {Fore.YELLOW}{class_data.SysData.global_err}{Fore.RESET} Active_DIR: {class_data.player_data.active_direction}", end='\r')
@@ -383,10 +384,8 @@ def show_map(map_in: class_data.map_obj = None):
     print(map_out, flush=True)
 
 
-# Main Key listener
+# Key Watcher
 def press_process(key):
-    # class_data.player_data.active_direction
-    #print(key.char)
     try:
         if key.char == "w":
             class_data.player_data.active_direction = "up"
@@ -398,4 +397,3 @@ def press_process(key):
             class_data.player_data.active_direction = "right"
     except Exception:
         pass
-

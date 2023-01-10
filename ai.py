@@ -18,8 +18,8 @@ def ghost_init():
     # class_data.ai_data.random_pos = _pos[3]
 
     # Start Management Threads
-    # Thread(target=heat_seek_ai).start()  # Start management for heat-seeker ghost
-    # Thread(target=intercept_ai).start()  # Start management for intercept ghost
+    Thread(target=heat_seek_ai).start()  # Start management for heat-seeker ghost
+    Thread(target=intercept_ai).start()  # Start management for intercept ghost
     # Thread(target=clyde_ai).start()  # Start management for clyde ghost
 
 
@@ -145,7 +145,8 @@ def intercept_ai():
 
         except Exception:
             class_data.SysData.global_err += 1
-    exit(-1) # Code has been killed
+    exit(-1)  # Code has been killed
+
 
 def clyde_ai():
     pass

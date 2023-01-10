@@ -6,6 +6,7 @@ from lib import Coord, check
 from os import system
 from threading import Thread
 from class_data import movement
+from colorama import Fore
 
 
 def movewatch_start():
@@ -27,11 +28,11 @@ def collision_watcher():
     x_off = class_data.map.map_x_off
     y_off = class_data.map.map_y_off
 
-    while True:
+    while class_data.map.movement_active:
         while not class_data.SysData.collision_pause:
             _p = class_data.player_data.pos  # Player Coordinate [OFFSET]
             _p_true = Coord(_p.x + x_off, _p.y + y_off)  # True Player Coordinate [TRUE INDEX]
-            collision_thr = 1.2  # Collision threshold, equal to or less than will trigger collision event
+            collision_thr = 1.15  # Collision threshold, equal to or less than will trigger collision event
 
             _ai = class_data.ai_data
             ghost_coord_null = [_ai.heatseek_pos, _ai.intercept_pos, _ai.ghost2_pos, _ai.random_pos]
@@ -43,7 +44,6 @@ def collision_watcher():
                 lives = class_data.player_data.lives
                 if lives == 1:  # Player was already on their last life. Player is dead
                     # Player is dead, Re-initiate Level 1
-
                     time.sleep(1)
                     player_death()
                     return
@@ -53,11 +53,15 @@ def collision_watcher():
                     return
 
 
-            # Point Checking
-            if class_data.player_data.points >= class_data.map.points_avail:
-                class_data.map.movement_active = False  # Pause Movements.
-                player_win()  # Player has collected all points on map, initiate win event.
-                exit(-69)  # Stop Thread.
+            _i = class_data.ai_data.intercept_pos
+            _h = class_data.ai_data.heatseek_pos
+
+            # Ghost Coord Visualizer, DEBUG
+            if _i is not None and _h is not None:
+                _char = Fore.CYAN + "■" + Fore.RESET
+                _char1 = Fore.GREEN + "■" + Fore.RESET
+                # class_data.SysData.move_q.append(movement(_char, _i, _i, " "))  # Load package
+                class_data.SysData.move_q.append(movement(_char1, _h, _h, " "))  # Load package
 
             time.sleep(0.00000001)
 
@@ -95,7 +99,15 @@ def pacmand():  # Pacman Logic Controller
                 if not new_coord in class_data.map.collected_coordinates:
                     class_data.player_data.points += 1
                     class_data.map.collected_coordinates.append(new_coord)
+
             time.sleep(0.100)  # Pacman Speed adjustment
+
+            # Point Checking
+            if class_data.player_data.points >= class_data.map.points_avail:
+                class_data.map.movement_active = False  # Pause Movements.
+                player_win()  # Player has collected all points on map, initiate win event.
+                exit(-69)  # Stop Thread.
+
         except Exception:
             class_data.SysData.global_err += 1
             continue
@@ -116,8 +128,7 @@ def clear_cache(full_clear=False):
     class_data.SysData.move_q.clear()  # Clear all active movements
 
     if full_clear:
-        class_data.map.ghost_collected.clear()
-        class_data.map.collected_coordinates.clear()
+        class_data.map.collected_coordinates.clear()  # Clear caches coord list for collected points
 
 
 def player_death():  # Not Finished
@@ -141,7 +152,6 @@ def resume_points():
     coord_list = class_data.map.collected_coordinates
     for c in coord_list:
         class_data.SysData.move_q.append(movement(" ", c, c, " "))  # Load package
-    pass
 
 
 def life_down():  # Player death event
@@ -151,12 +161,13 @@ def life_down():  # Player death event
     lib.map_loader("main")  # Load initial map data
     lib.show_map()  # Re-initiate map display
 
+
     # Re-Initiate Ghost Data and movement
     class_data.map.movement_active = True  # Re-initiate movement lock
     clear_cache()  # Clear all cached old data
     resume_points()  # Queue movements for point resume
     movewatch_start()  # Start the floating collision watcher
-    time.sleep(len(class_data.SysData.move_q) * 0.05)  # Dynamic wait, ensure all load packages are finished processing
+    time.sleep(len(class_data.SysData.move_q) * 0.01)  # Dynamic wait, ensure all load packages are finished processing
     player_reset()  # Player data reset
     ai.ghost_init()  # Re-Initiate all ghost management threads
     script_init(False)  # Re-Initiate General Management Threads

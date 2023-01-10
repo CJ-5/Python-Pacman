@@ -31,7 +31,6 @@ if __name__ == "__main__":
     pacman_func.script_init()
     ai.ghost_init()  # Initiate ghost data
 
-
     with keyboard.Listener(on_press=lib.press_process) as listener:
         listener.join()
 
